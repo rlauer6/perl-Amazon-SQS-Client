@@ -1,0 +1,130 @@
+package Amazon::SQS::Config;
+
+use AppConfig qw/ARGCOUNT_ONE EXPAND_ALL/;
+use Cwd;
+use File::Basename;
+
+use strict;
+use vars qw/@ISA @EXPORT_OK $AWS_SQS_CONFIG/;
+
+@ISA = qw/AppConfig Exporter/;
+
+@EXPORT_OK = qw/AWS_SQS_CONFIG/;
+
+=pod
+
+=head1 NAME
+
+ Amazon::SQS::Config
+
+=head1 SYNOPSIS
+
+ my $config = new Amazon::SQS::Config( "amazon-sqs.ini" );
+
+ my $AWS_ACCESS_KEY_ID     = $config->aws_access_key_id;
+ my $AWS_SECRET_ACCESS_KEY = $config->aws_secret_access_key;
+
+ my $config = new Amazon::SQS::Config( \*DATA );
+
+=head1 DESCRIPTION
+
+C<AppConfig> based module to retrieve configuration information for
+AWS SQS services from a F<.ini> style file.
+
+The configuration file should look something like:
+
+  # AWS Settings
+  [queue]
+  interval = 2 
+  max_wait = 20 
+  visibility_timeout = 60
+
+  [aws]
+  access_key_id = <Your Access Key ID>
+  secret_access_key = <Your Secret Access Key>
+  queue_url = https://queue.amazonaws.com/106518701080/treasurersbriefcase-new-account
+  
+  [log]
+  stdout = /tmp/amazon_sqs.log
+  stderr = /tmp/amazon_sqs.log
+
+...however your use of the configuration file will dictate your needs.
+AmazonE<039>s example scripts only use the C<[aws]> section to access
+your AWS credentials.
+
+You should probably make sure that the F<.ini> file with your
+credentials is properly protected with restrictive permissions.
+
+ $ sudo chown root amazon-sqs.ini
+ $ sudo chmod og-rw amazon.sqs.ini
+
+=head1 METHODS
+
+=head2 new
+
+ new( file | file-handle )
+
+You can pass either the name of a file or a file handle to the new method.
+
+=over
+
+=item file
+
+The name of a F<.ini> style file that contains the AWS SQS configuration information.
+
+=item file-handle
+
+Handle of an open F<.ini> style file.
+
+=back
+
+=cut
+
+sub new {
+  my $class = shift;
+  $class = ref($class) || $class;
+
+  $AWS_SQS_CONFIG = shift;
+
+  unless (ref $_[0] ) {
+    my ($name, $path, $ext) = fileparse( $AWS_SQS_CONFIG, qr/\.[^.]*$/ );
+    
+    $path = cwd() . '/'
+      unless $path && $path ne './';
+  
+    $AWS_SQS_CONFIG = sprintf( "%s%s%s", $path, $name, $ext );
+  }
+
+  my $self= $class->SUPER::new( 
+			       {
+				CASE   => 1,
+				CREATE => 1,
+				ERROR  => sub {},
+				GLOBAL => {
+					   EXPAND => EXPAND_ALL,
+					   DEFAULT  => undef,
+					   ARGCOUNT => ARGCOUNT_ONE
+					  }
+			       }
+			      );
+  
+  $self->file( $AWS_SQS_CONFIG, @_ );
+
+  bless $self, $class;
+
+  return $self;
+}
+
+=pod
+
+=head1 SEE ALSO
+
+C<AppConfig>
+
+=head1 AUTHOR
+
+Rob Lauer - <rlauer6@comcast.net>
+
+=cut
+
+1;
