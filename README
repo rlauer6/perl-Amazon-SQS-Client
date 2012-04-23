@@ -1,0 +1,60 @@
+$Id: README,v 1.1 2012/04/23 20:44:51 rlauer Exp $
+
+This is the README file for the `perl-Amazon-SQS-Client' project.
+
+This project contains perl modules and example perl scripts that
+interface with Amazon Web Service's Simple Queue Service.  The Amazon
+SQS is designed to be a component in distributed cloud based
+applications.  It implements a simple message queueing system which
+allows you to send and receive messages that your programs might use
+for interprocess communications.
+
+See `INSTALL' for information on how to build and instal this project.
+
+See `BUGS' for information on how to report problems with this
+project.
+
+See `/usr/share/amazon-web-services/sqs/ReadMe.html' for the
+information about how to use these modules.
+
+
+EXAMPLES
+========
+
+The original Amazon SQS library was distributed as a .zip file with
+exampe scripts found in the `amazon-queue/src/Amazon/SQS/Samples'
+directory.  The example files were skeletons that you were expected to
+flesh out by adding your AWS credentials and instantiate the correct
+parameters to send to the module being tested.
+
+The examples in this project have been modified from their original
+version so that they will read a configuration file (.ini style) named
+`aws-sqs.ini' located in the `/usr/share/amazon-web-services/sqs'
+directory.
+
+After installation of the package read the perldocs which describe the
+format of this file and what you are expected to do to configure the
+examples.
+
+ $ perldoc Amazon::SQS::Config
+
+
+WHERE TO GO FROM HERE
+=====================
+
+Author(s)
+=========
+
+Amazon perl modules: 
+ 
+ <Elena@AWS>
+
+RPM/autoconf package: 
+
+ Rob Lauer - <rlauer6@comcast.net>
+
+Amazon/SQS/Config.pm
+QueDaemon.pl:
+aws-sqsd:
+
+ Rob Lauer - <rlauer6@comcast.net>

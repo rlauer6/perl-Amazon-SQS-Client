@@ -1,0 +1,20 @@
+$Id: NEWS,v 1.1 2012/04/23 20:42:17 rlauer Exp $
+
+This is the 'NEWS' file for the 'perl-Amazon-SQS-Client' project. This file contains
+information on changes since the last release of the package, as well as a
+running list of changes from previous versions.  If critical bugs are found in
+any of the software, notice of such bugs and the versions in which they were
+fixed will be noted here, as well.
+
+-----------------------------------------------------------------------
+
+perl-Amazon-SQS-Client 1.0.0 (2012-04-23)
+
+    Enhancements:
+
+    - This is the first release of the autoconf'd and RPM'd version of
+      the AWS SQS perl library.
+
+    Fixes:
+
+    (None)
