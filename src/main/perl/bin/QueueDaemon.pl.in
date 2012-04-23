@@ -1,0 +1,218 @@
+#!@perlrun@
+
+# $Id: QueueDaemon.pl.in,v 1.1 2012/04/23 21:34:56 rlauer Exp $
+
+use strict;
+use warnings;
+use Data::Dumper;
+
+use lib '@perl5libdir@';
+
+use Getopt::Long;
+
+use Proc::Daemon;
+use Proc::PID::File;
+
+use Amazon::SQS::Config;
+use Amazon::SQS::Client; 
+use Amazon::SQS::Model::ReceiveMessageRequest;
+use Amazon::SQS::Model::DeleteMessageRequest;
+use Amazon::SQS::Exception;
+
+=pod
+
+=head1 NAME 
+
+ $0
+
+=head1 SYNOPSIS
+
+ QueueDaemon.pl --config=amazon.ini
+
+=head1 DESCRIPTION
+
+Implements a daemon that reads from Amazon's Simple Queue Service
+(SQS).
+
+=head1 NOTES
+
+On a RedHat or CentOS system, use C<chkconfig> to add the example daemon.
+
+ $ chkconfig --add aws-sqsd
+
+The daemons should be started and stopped using C</sbin/service> program as follows:
+
+=over 5
+
+=item Starting
+
+ $ sudo /sbin/service aws-sqsd start
+
+=item Stopping
+
+ $ sudo /sbin/service aws-sqsd stop
+
+=item Restarting
+
+ $ sudo /sbin/service aws-sqsd restart
+
+=item Rereading Config file after changes
+
+ $ sudo /sbin/service aws-sqsd graceful
+
+=back
+
+=head1 CONFIGURATION
+
+See L</Amazon::SQS::Config>
+
+=cut
+
+
+# +--------------------------+
+# | MAIN PROGRAM STARTS HERE |
+# +--------------------------+
+
+my $CONFIG_FILE;
+
+GetOptions( "config=s", \$CONFIG_FILE );
+
+unless ( $CONFIG_FILE && -s $CONFIG_FILE ) {
+  print "usage: $0 --config=config-file\n";
+  exit 1;
+}
+
+my $config = new Amazon::SQS::Config( $CONFIG_FILE );
+
+# set up signal handlers
+my $keep_going = 1;
+
+$SIG{HUP}  = sub { 
+  print STDERR "Caught SIGHUP:  re-reading config file.\n"; 
+  
+  $keep_going = 1;
+   
+  $config->file( $CONFIG_FILE );
+};
+
+$SIG{INT}  = sub { print STDERR ("Caught SIGINT:  exiting gracefully\n");
+		   $keep_going = 0; 
+		 };
+
+$SIG{QUIT} = sub { print STDERR ("Caught SIGQUIT:  exiting gracefully\n"); 
+		   $keep_going = 0; 
+		 };
+
+$SIG{TERM} = sub { print STDERR ("Caught SIGTERM:  exiting gracefully\n"); 
+		   $keep_going = 0;
+		 };
+
+my $AWS_ACCESS_KEY_ID     = $config->aws_access_key_id;
+my $AWS_SECRET_ACCESS_KEY = $config->aws_secret_access_key;
+
+my $service = Amazon::SQS::Client->new( $AWS_ACCESS_KEY_ID, $AWS_SECRET_ACCESS_KEY );
+my $url = $config->aws_queue_url;
+
+my $request = new Amazon::SQS::Model::ReceiveMessageRequest( 
+							    { 
+							     QueueUrl => $url,
+							     MaxNumberOfMessages => 1
+							    }
+							   );
+# Daemonize
+Proc::Daemon::Init(
+		   {
+		    child_STDOUT => $config->log_stdout,
+		    child_STDERR => $config->log_stderr
+		   }
+		  );
+
+# If already running, then exit
+  if ( Proc::PID::File->running() ) {
+    exit(0);
+  }
+
+my $max_sleep_period = $config->queue_max_wait;
+my $sleep = $config->queue_interval || 5;
+
+# Enter loop to do work
+while ( $keep_going ) {
+  printf "Reading queue\n";
+  
+  my $response = $service->receiveMessage($request);
+  
+  if ( $response->isSetReceiveMessageResult() ) {
+    my $receiveMessageResult = $response->getReceiveMessageResult();
+    my $messageList = $receiveMessageResult->getMessage();
+    my $message = shift @$messageList;
+    
+    if ( $message && $message->isSetMessageId() ) {
+      printf("Processing message...%s\n", $message->getMessageId());
+      printf("Message...%s\n", $message->getBody());
+
+      if ( $message->isSetReceiptHandle() ) {
+	my $handle = $message->getReceiptHandle();
+
+	printf("Handle : %s\n", $handle);
+
+	eval {
+	  printf("Deleting message\n");
+	  
+	  $service->deleteMessage( 
+				  new Amazon::SQS::Model::DeleteMessageRequest(
+									       { QueueUrl => $url,
+										 ReceiptHandle => $handle
+									       }
+									      )
+				 );
+	};
+	
+	if ( $@ ) {
+	  my $ex = $@;
+
+	  if ( ref $ex eq "Amazon::SQS::Exception") {
+	    print("Caught Exception: " . $ex->getMessage() . "\n");
+	    print("Response Status Code: " . $ex->getStatusCode() . "\n");
+	    print("Error Code: " . $ex->getErrorCode() . "\n");
+	    print("Error Type: " . $ex->getErrorType() . "\n");
+	    print("Request ID: " . $ex->getRequestId() . "\n");
+	    print("XML: " . $ex->getXML() . "\n");
+	  } else {
+	    print $@;
+	  }
+	}
+      }
+
+      $sleep = $config->queue_interval;
+    }
+    else {
+      printf "Nothing found - sleeping for $sleep seconds...\n";
+
+      sleep $sleep;
+
+      $sleep += $config->queue_interval
+	unless $sleep >= $max_sleep_period;
+      
+      }
+  }
+}
+
+# $Log: QueueDaemon.pl.in,v $
+# Revision 1.1  2012/04/23 21:34:56  rlauer
+# Initial revision
+#
+# Revision 1.1.1.1  2012/04/23 01:19:56  rlauer
+# - initial project check-in
+#
+
+=pod
+
+=head1 SEE ALSO
+
+C<Proc::Daemon>, C<Amazon::SQS::Config>, C<Amazon::SQS::Client>
+
+=head1 AUTHOR
+
+Rob Lauer - <rlauer6@comcast.net>
+
+=cut
