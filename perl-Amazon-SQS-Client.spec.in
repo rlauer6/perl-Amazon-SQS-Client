@@ -1,0 +1,56 @@
+%define name		@PACKAGE@
+%define release		0
+%define project_version	@VERSION@
+%define buildroot %{_topdir}/%{name}-%{version}-root
+
+Provides: @PACKAGE_NAME@
+
+%define project_base @PACKAGE_NAME@
+
+Name:     %{project_base}
+Version:  %(echo @VERSION@ | awk -F- '{print $1}')
+Release:  %(echo @VERSION@ | awk -F- '{if (length($2) == 0) {print "0" } else { print $2 } }')
+Vendor:   Amazon Web Services
+Source:   %{project_base}-%{project_version}.tar.gz
+
+%define _prefix         /usr
+%define _datadir        %{_prefix}/share
+%define _sysconfdir     %{_prefix}/etc
+%define _localstatedir  %{_prefix}/var
+%define _mandir         %{_prefix}/man
+%define _infodir        %{_prefix}/info
+%define _libdir         %{_prefix}/lib
+%define _bindir         %{_prefix}/bin
+%define _libexecdir     %{_prefix}/libexec
+%define _sbindir        %{_prefix}/sbin
+%define _includedir     %{_prefix}/include
+
+BuildRoot:	%{buildroot}
+BuildArch:      noarch
+Summary:	@PACKAGE@
+License:	Apache
+Prefix: 	/usr
+Group: 		Amazon Web Services/Library
+
+%define pkgname %{project_base}-%{project_version}
+
+%description
+Perl library for interacting with Amazon Web Services Simple Queue Service
+
+%prep
+%setup -q -n %{pkgname}
+
+%build
+./configure --prefix=/usr
+
+make
+
+%post
+
+%install
+make install DESTDIR=%{buildroot}
+
+%files
+%defattr(-,root,root)
+/usr
+/etc/rc.d/init.d/aws-sqsd
