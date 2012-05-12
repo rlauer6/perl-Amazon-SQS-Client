@@ -110,10 +110,14 @@ AC_SUBST([perl5libdir])
 dnl something just to make autoconf include the autotools/ads_ stuff in the distribution
 ads_PERL_MODULE([AppConfig])
 ads_PERL_MODULE([Data::Dumper])
+ads_PERL_MODULE([Digest::SHA])
 ads_PERL_MODULE([Getopt::Long])
+ads_PERL_MODULE([LWP::UserAgent])
 ads_PERL_MODULE([Proc::Daemon])
 ads_PERL_MODULE([Proc::PID::File])
+ads_PERL_MODULE([Time::HiRes])
 ads_PERL_MODULE([URI::Escape])
+ads_PERL_MODULE([XML::Simple])
 
 AX_DISTCHECK_HACK
 
