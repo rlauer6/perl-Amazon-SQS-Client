@@ -62,7 +62,7 @@ my $SERVICE_VERSION = "2009-02-01";
 
 =head1 DESCRIPTION
  
-C<Amazon::SQS::Client> is the implementation of service API
+C<Amazon::SQS::Client> is the implementation of service API to AmazonE<039>s Simple Queue Service
 
 =head1 DETAILS
 
@@ -100,7 +100,7 @@ The AWS I<secret access key> you were given when you signed up for AWS services.
 
 =item config
 
-C<config> is an optional hash reference containg the options listed below.
+C<config> is an optional hash reference containing the options listed below.
 
 =over 5
 
@@ -1238,9 +1238,12 @@ Elena@AWS
                                                                                          
 1;
 
-# $Id: Client.pm.in,v 1.1 2012/04/24 19:36:39 rlauer Exp $
+# $Id: Client.pm.in,v 1.2 2013/01/29 21:13:55 rlauer Exp $
 
 # $Log: Client.pm.in,v $
-# Revision 1.1  2012/04/24 19:36:39  rlauer
-# Initial revision
+# Revision 1.2  2013/01/29 21:13:55  rlauer
+# - update pod
+#
+# Revision 1.1.1.1  2012/04/24 19:36:39  rlauer
+# imported sources
 #
