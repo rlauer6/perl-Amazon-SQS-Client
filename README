@@ -1,4 +1,4 @@
-$Id: README,v 1.1 2012/04/23 20:44:51 rlauer Exp $
+$Id: README,v 1.2 2013/01/29 21:14:04 rlauer Exp $
 
 This is the README file for the `perl-Amazon-SQS-Client' project.
 
@@ -22,7 +22,7 @@ EXAMPLES
 ========
 
 The original Amazon SQS library was distributed as a .zip file with
-exampe scripts found in the `amazon-queue/src/Amazon/SQS/Samples'
+example scripts found in the `amazon-queue/src/Amazon/SQS/Samples'
 directory.  The example files were skeletons that you were expected to
 flesh out by adding your AWS credentials and instantiate the correct
 parameters to send to the module being tested.
@@ -45,16 +45,26 @@ WHERE TO GO FROM HERE
 Author(s)
 =========
 
-Amazon perl modules: 
- 
+The original perl modules were (apparently) written by someone whose
+email address is:
+
  <Elena@AWS>
 
-RPM/autoconf package: 
+..so clearly the credit for the concept, excecution, content, and
+substance, should go to that individual.  Likewise please heap
+accolades, carps, whines, and other forms of acknowledgments toward
+that person(s) direction with regard to the software itself.
+
+If you are at all annoyed at the packaging, wish it were a proper CPAN
+module or other such non-sense than direct your venom here:
 
  Rob Lauer - <rlauer6@comcast.net>
 
-Amazon/SQS/Config.pm
-QueDaemon.pl:
-aws-sqsd:
+You'll find some extra goodies that may or may not be of any value:
 
- Rob Lauer - <rlauer6@comcast.net>
+  Amazon/SQS/Config.pm => configuration file access
+
+  QueDaemon.pl         => a base class for handling simple messages 
+                          placed on SQS queues
+
+  aws-sqsd             => bash script for starting a queue handling daemon
