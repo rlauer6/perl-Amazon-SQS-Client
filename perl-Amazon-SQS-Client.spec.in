@@ -32,6 +32,8 @@ License:	Apache
 Prefix: 	/usr
 Group: 		Amazon Web Services/Library
 
+Requires: perl(Crypt::SSLeay)
+
 %define pkgname %{project_base}-%{project_version}
 
 %description
