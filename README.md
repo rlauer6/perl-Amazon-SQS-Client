@@ -79,10 +79,11 @@ EXAMPLES
 ========
 
 The original Amazon SQS library was distributed as a .zip file with
-example scripts found in the `amazon-queue/src/Amazon/SQS/Samples`
-directory.  The example files were skeletons that you were expected to
-flesh out by adding your AWS credentials and instantiate the correct
-parameters to send to the module being tested.
+example scripts (formerly) found in the
+`amazon-queue/src/Amazon/SQS/Samples` directory.  The example files
+were skeletons that you were expected to flesh out by adding your AWS
+credentials and instantiate the correct parameters to send to the
+module being tested.
 
 The examples in this project have been modified from their original
 version so that they will read a configuration file (.ini style) named
@@ -100,8 +101,8 @@ examples.
 WHERE TO GO FROM HERE
 =====================
 
-Try any of the examples in the `../Samples` directory referenced
-above.
+Try any of the examples in the
+`/usr/share/amazon-web-services/sqs/examples` directory.
 
 `QueueDaemon.pl`
 --------------
