@@ -33,6 +33,7 @@ Prefix: 	/usr
 Group: 		Amazon Web Services/Library
 
 Requires: perl(Crypt::SSLeay)
+Requires: perl(LWP::Protocol::https)
 
 %define pkgname %{project_base}-%{project_version}
 
