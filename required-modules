@@ -1,9 +1,11 @@
 AppConfig
 Crypt::SSLeay
+Digest::SHA
 Data::Dumper
 LWP::Protocol::https
 LWP::UserAgent
 Time::HiRes
 Proc::PID::File
 Proc::Daemon
+URI::Escape
 XML::Simple

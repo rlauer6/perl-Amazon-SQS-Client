@@ -43,6 +43,7 @@ REQUIRED PERL MODULES
 * AppConfig
 * Crypt::SSLeay
 * Data::Dumper
+* Digest::SHA
 * LWP::Protocol::https
 * LWP::UserAgent
 * Time::HiRes
