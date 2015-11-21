@@ -1,4 +1,4 @@
-$Id: NEWS,v 1.1 2012/04/23 20:42:17 rlauer Exp $
+$Id: NEWS,v 1.2 2015/11/21 14:37:23 rlauer Exp $
 
 This is the 'NEWS' file for the 'perl-Amazon-SQS-Client' project. This file contains
 information on changes since the last release of the package, as well as a
@@ -7,7 +7,20 @@ any of the software, notice of such bugs and the versions in which they were
 fixed will be noted here, as well.
 
 -----------------------------------------------------------------------
+perl-Amazon-SQS-Client 1.0.1 (2015-11-21)
 
+    Enhancements:
+
+    - Added long polling support by modifying:
+      
+      Amazon::SQS::Client
+      Amazon::SQS::Model::ReceiveMessageRequest
+
+    Fixes:
+
+    (None)
+
+-----------------------------------------------------------------------
 perl-Amazon-SQS-Client 1.0.0 (2012-04-23)
 
     Enhancements:
