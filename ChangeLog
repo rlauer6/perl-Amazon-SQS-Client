@@ -1,6 +1,10 @@
 2015-11-21  Rob Lauer <rlauer6@comcast.net>
+	* README.md: new from README
+	* configure.ac: LWP::Protocol::https, Crypt::SSLeay
+	* Makefile.am: README.md, required-modules
+	* required-modules
 
-	RELEASED: perl-Amazon-SQS-Client 1.0.0
+	RELEASED: perl-Amazon-SQS-Client 1.0.1
 
 	* NEWS: set release date
 	* configure.ac: update version
