@@ -1,3 +1,23 @@
+2015-11-21  Rob Lauer <rlauer6@comcast.net>
+
+	RELEASED: perl-Amazon-SQS-Client 1.0.0
+
+	* NEWS: set release date
+	* configure.ac: update version
+
+	[Long Polling]:
+	* src/main/perl/lib/Amazon/SQS/Client.pm.in
+	(pod): more of it, tweaks
+	(new): ServiceVersion
+	(_addRequiredParameters): likewise
+	(_convertReceiveMessage): WaitTimeSeconds
+	* src/main/perl/lib/Amazon/SQS/Model/ReceiveMessageRequest.pm.in
+	(new): WaitTimeSeconds
+	(getWaitTimeSeconds): new
+	(setWaitTimeSeconds): new
+	(withWaitTimeSeconds): new
+	(isSetWaitTimeSeconds): new
+
 2012-05-12  Rob Lauer <rlauer6@comcast.net>
 	* configure.ac
 	(ads_PERL_MODULE): Digest::SHA, LWP::UserAgent, Time::HiRes
