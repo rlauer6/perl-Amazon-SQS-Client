@@ -40,13 +40,19 @@ information about how to use these modules.
 REQUIRED MODULES
 ================
 
+* AppConfig
 * Crypt::SSLeay
+* Data::Dumper
+* LWP::Protocol::https
 * LWP::UserAgent
 * Time::HiRes
 * Proc::PID::File
 * Proc::Daemon
-* Data::Dumper
-* AppConfig
+* XML::Simple
+
+```
+$ for a in $(cat required-modules); do sudo yum install -y 'perl'($a')'; done
+```
 
 QUICK INSTALL
 =============
