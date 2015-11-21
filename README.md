@@ -29,7 +29,7 @@ applications.  It implements a simple message queueing system which
 allows you to send and receive messages that your programs might use
 for interprocess communications.
 
-See `INSTALL` for information on how to build and instal this project.
+See `INSTALL` for information on how to build and install this project.
 
 See `BUGS` for information on how to report problems with this
 project.
@@ -37,8 +37,8 @@ project.
 See `/usr/share/amazon-web-services/sqs/ReadMe.html` for the
 information about how to use these modules.
 
-REQUIRED MODULES
-================
+REQUIRED PERL MODULES
+=====================
 
 * AppConfig
 * Crypt::SSLeay
