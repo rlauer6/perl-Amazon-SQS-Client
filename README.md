@@ -37,6 +37,16 @@ project.
 See `/usr/share/amazon-web-services/sqs/ReadMe.html` for the
 information about how to use these modules.
 
+REQUIRED MODULES
+================
+
+* Crypt::SSLeay
+* LWP::UserAgent
+* Time::HiRes
+* Proc::PID::File
+* Proc::Daemon
+* Data::Dumper
+* AppConfig
 
 QUICK INSTALL
 =============
