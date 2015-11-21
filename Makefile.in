@@ -33,7 +33,7 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 subdir = .
-DIST_COMMON = README $(am__configure_deps) $(dist_aws_sqs_DATA) \
+DIST_COMMON = $(am__configure_deps) $(dist_aws_sqs_DATA) \
 	$(dist_noinst_DATA) $(srcdir)/${PACKAGE_NAME}.spec.in \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(top_srcdir)/configure AUTHORS COPYING ChangeLog INSTALL NEWS \
@@ -215,7 +215,7 @@ dist_aws_sqs_DATA = \
     ChangeLog \
     COPYING \
     NEWS \
-    README
+    README.md
 
 all: all-recursive
 
