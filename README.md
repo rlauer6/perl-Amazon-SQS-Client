@@ -12,7 +12,7 @@ HACKS TO ORIGINAL PROJECT
 2. An example queue daemon - this project presents an example daemon
 for handling SQS messages (`QueueDaemon.pl`).
 3. Long polling - support for API version 2012-11-05 `WaitTimeSeconds`
-parameter to the `ReceiveMessage`
+parameter to the `ReceiveMessage` API call.
 
 *Note there has been no attempt to update all of the API calls to
 support differences between version 2009-02-01 of the API and
@@ -36,6 +36,27 @@ project.
 
 See `/usr/share/amazon-web-services/sqs/ReadMe.html` for the
 information about how to use these modules.
+
+
+QUICK INSTALL
+=============
+
+```
+$ ./configure --prefix=/usr
+$ sudo make && make install
+```
+
+RPM BUILDING
+============
+
+Assuming you know how to build RPMs and have the requisite rpm build
+tools installed...
+
+```
+$ ./configure --prefix=/usr
+$ make && make dist
+$ rpmbuild -tb perl-Amazon-SQS-Client-1.0.1.tar.gz
+```
 
 
 EXAMPLES
@@ -63,14 +84,15 @@ examples.
 WHERE TO GO FROM HERE
 =====================
 
-You can try any of the examples in the `../Samples` directory referenced
+Try any of the examples in the `../Samples` directory referenced
 above.
 
 `QueueDaemon.pl`
 --------------
 
-This is a reference implementation...the idea is for you to look at it
-and modify it accordingly.  It does not actually do anything.
+This is a reference implementation...the idea is for you to examine
+the code and modify it accordingly.  It does not actually do anything
+useful.
 
 
 Author(s)
@@ -87,12 +109,14 @@ accolades, carps, whines, and other forms of acknowledgments toward
 that person(s) direction with regard to the software itself.
 
 If you are at all annoyed at the packaging, wish it were a proper CPAN
-module or other such nonsense than direct your venom here:
+module, or other such nonsense than direct your venom here:
 
 Rob Lauer - `<rlauer6@comcast.net>`
 
 You'll find some extra goodies that may or may not be of any value:
 
 *  `Amazon::SQS::Config` - configuration file access
-*  `QueDaemon.pl` - a base class for handling simple messages placed on SQS queues
+*  `QueDaemon.pl` - a reference implementation of a daemon for handling simple messages placed on SQS queues
 *  `aws-sqsd` - bash script for starting a queue handling daemon
+
+Enjoy!
