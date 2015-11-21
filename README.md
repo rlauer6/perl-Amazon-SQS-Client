@@ -49,6 +49,7 @@ REQUIRED PERL MODULES
 * Time::HiRes
 * Proc::PID::File
 * Proc::Daemon
+* URI::Escape
 * XML::Simple
 
 ```
