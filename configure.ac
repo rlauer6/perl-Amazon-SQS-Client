@@ -1,4 +1,4 @@
-AC_INIT([perl-Amazon-SQS-Client], [1.0.0], [rlauer6@comcast.net], [perl-Amazon-SQS-Client])
+AC_INIT([perl-Amazon-SQS-Client], [1.0.1], [rlauer6@comcast.net], [perl-Amazon-SQS-Client])
 
 __poor_mans_expand_file_name () {
     _tmp_name=$1
