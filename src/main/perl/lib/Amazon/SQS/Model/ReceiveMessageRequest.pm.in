@@ -18,46 +18,69 @@
 #  Generated: Thu Apr 09 01:13:11 PDT 2009 
 # 
 
-
 package Amazon::SQS::Model::ReceiveMessageRequest;
 
 use base qw (Amazon::SQS::Model);
 
-    
+#
+# Amazon::SQS::Model::ReceiveMessageRequest
+# 
+# Properties:
+#
+# 
+# QueueUrl: string
+# MaxNumberOfMessages: int
+# WaitTimeSeconds: int
+# VisibilityTimeout: int
+# AttributeName: string
+#
+# 
+# 
 
-    #
-    # Amazon::SQS::Model::ReceiveMessageRequest
-    # 
-    # Properties:
-    #
-    # 
-    # QueueUrl: string
-    # MaxNumberOfMessages: int
-    # VisibilityTimeout: int
-    # AttributeName: string
-    #
-    # 
-    # 
-    sub new {
-        my ($class, $data) = @_;
-        my $self = {};
-        $self->{_fields} = {
-            
-            QueueUrl => { FieldValue => undef, FieldType => "string"},
-            MaxNumberOfMessages => { FieldValue => undef, FieldType => "int"},
-            VisibilityTimeout => { FieldValue => undef, FieldType => "int"},
-            AttributeName => {FieldValue => [], FieldType => ["string"]},
-        };
-
-        bless ($self, $class);
-        if (defined $data) {
-           $self->_fromHashRef($data); 
-        }
+sub new {
+  my ($class, $data) = @_;
+  my $self = {};
+  
+  $self->{_fields} = {
+		      QueueUrl            => { FieldValue => undef, FieldType => "string"},
+		      MaxNumberOfMessages => { FieldValue => undef, FieldType => "int"},
+		      WaitTimeSeconds     => { FieldValue => undef, FieldType => "int"}, # rcl 11/21/2015
+		      VisibilityTimeout   => { FieldValue => undef, FieldType => "int"},
+		      AttributeName       => { FieldValue => [],    FieldType => ["string"]},
+		     };
+  
+  bless ($self, $class);
+  if (defined $data) {
+    $self->_fromHashRef($data); 
+  }
         
-        return $self;
-    }
+  return $self;
+}
 
-    
+    # 8<---- rcl 11/21/2015 ----
+    sub getWaitTimeSeconds {
+        return shift->{_fields}->{WaitTimeSeconds}->{FieldValue};
+      }
+
+    sub setWaitTimeSeconds {
+        my ($self, $value) = @_;
+
+        $self->{_fields}->{WaitTimeSeconds}->{FieldValue} = $value;
+        return $self;
+      }
+
+    sub withWaitTimeSeconds {
+        my ($self, $value) = @_;
+        $self->setWaitTimeSeconds($value);
+        return $self;
+      }
+
+
+    sub isSetWaitTimeSeconds {
+        return defined (shift->{_fields}->{WaitTimeSeconds}->{FieldValue});
+      }
+    # 8<------------------------
+
     sub getQueueUrl {
         return shift->{_fields}->{QueueUrl}->{FieldValue};
     }

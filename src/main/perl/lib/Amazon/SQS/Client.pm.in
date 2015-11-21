@@ -31,6 +31,7 @@ use URI;
 use URI::Escape;
 use Time::HiRes qw(usleep);
 use XML::Simple;
+use Data::Dumper;
 
 my $SERVICE_VERSION = "2009-02-01";
 
@@ -43,26 +44,27 @@ my $SERVICE_VERSION = "2009-02-01";
 =head1 SYNOPSIS
 
  # create an HTTP client
- my $aws_client = new Amazon::SQS::Client( $AWS_ACCESS_KEY_ID, $AWS_SECRET_ACCESS_KEY);
+ my $aws_client = Amazon::SQS::Client->new( $AWS_ACCESS_KEY_ID, $AWS_SECRET_ACCESS_KEY);
 
  # create a request
- my $request = new Amazon::SQS::Model::SendMessageRequest( 
-                                                          {
-                                                           QueueUrl => $AWS_QUEUE_URL, 
-                                                           MessageBody => $message
-                                                          }
-                                                       );
+ my $request = Amazon::SQS::Model::SendMessageRequest->new( 
+                                                           {
+                                                            QueueUrl    => $AWS_QUEUE_URL, 
+                                                            MessageBody => $message
+                                                           }
+                                                          );
  my $response;
 
  # submit the request and get a response
  eval {
-  $response = $service->sendMessage( $request );
+  $response = $aws_client->sendMessage( $request );
  };
 
 
 =head1 DESCRIPTION
- 
-C<Amazon::SQS::Client> is the implementation of service API to AmazonE<039>s Simple Queue Service
+
+C<Amazon::SQS::Client> is the implementation of a service API to
+AmazonE<039>s Simple Queue Service.
 
 =head1 DETAILS
 
@@ -116,6 +118,12 @@ default: Amazon SQS Perl Library
 
 default: 2
 
+=item * ServiceVersion
+
+default: 2009-02-01
+
+default: 2
+
 =item * MaxErrorRetry
 
 default: 3
@@ -137,13 +145,14 @@ default: -1
 sub new {
   my ($class, $awsAccessKeyId, $awsSecretAccessKey, $config) = @_;
   my $defaultConfig =  {
-			ServiceURL => "https://queue.amazonaws.com",
-			UserAgent => "Amazon SQS Perl Library",
+			ServiceURL       => "https://queue.amazonaws.com",
+			UserAgent        => "Amazon SQS Perl Library",
 			SignatureVersion => 2,
-			SignatureMethod => "HmacSHA256",
-			ProxyHost => undef,
-			ProxyPort => -1,
-			MaxErrorRetry => 3
+			SignatureMethod  => "HmacSHA256",
+			ProxyHost        => undef,
+			ProxyPort        => -1,
+			MaxErrorRetry    => 3,
+			ServiceVersion   => $SERVICE_VERSION
 		       };
   my $self = {};
 
@@ -678,34 +687,43 @@ sub _invoke {
 	$response = $self->_httpPost($queueUrl, $parameters);
 	if ($response->is_success) {
 	  $shouldRetry = 0;
-	} else {
+	} 
+	else {
 	  if ($response->code == 500 || $response->code == 503) {
 	    $shouldRetry = 1;
 	    $self->_pauseOnRetry(++$retries, $response->code);
-	  } else {
+	  } 
+	  else {
 	    my $ex = $self->_reportAnyErrors($response->content, $response->code);
 	    Carp::croak ($ex) if ($ex);
 	  }
 	}
       };
+
       my $e = $@;
+
       if ($e) {
 	if (ref $e eq "Amazon::SQS::Exception") {
 	  Carp::croak $e;
-	} else {
+	} 
+	else {
 	  Carp::croak (Amazon::SQS::Exception->new ({Message => $e}));
 	}
       }
     } while ($shouldRetry);
   };
+
   my $e = $@;
+
   if ($e) {
     if (ref $e eq "Amazon::SQS::Exception") {
       Carp::croak $e;
-    } else {
+    }
+    else {
       Carp::croak (Amazon::SQS::Exception->new ({Message => $e}));
     }
   }
+
   return $response->content;
 }
 
@@ -773,17 +791,22 @@ sub _reportAnyErrors {
 #
 sub _httpPost {
   my ($self, $queueUrl, $parameters) = @_;
+
   my $url = $queueUrl;
+
   require LWP::UserAgent;
   my $ua = LWP::UserAgent->new;
   my $request= HTTP::Request->new("POST", $url);
   $request->content_type("application/x-www-form-urlencoded; charset=utf-8");
+
   my $data = "";
+
   foreach my $parameterName (keys %$parameters) {
     no warnings "uninitialized";
     $data .= $parameterName .  "="  . $self->_urlencode($parameters->{$parameterName}, 0);
     $data .= "&";
   }
+
   chop ($data);
   $request->content($data);
   my $response = $ua->request($request);
@@ -797,7 +820,7 @@ sub _addRequiredParameters {
   my ($self,  $parameters, $queueUrl) = @_;
   $parameters->{AWSAccessKeyId} = $self->{_awsAccessKeyId};
   $parameters->{Timestamp} = $self->_getFormattedTimestamp();
-  $parameters->{Version} = $SERVICE_VERSION;
+  $parameters->{Version} = $self->{_config}->{ServiceVersion};
   $parameters->{SignatureVersion} = $self->{_config}->{SignatureVersion} || "1";
   $parameters->{Signature} = $self->_signParameters($parameters, $queueUrl, $self->{_awsSecretAccessKey});
 
@@ -1103,6 +1126,13 @@ sub _convertReceiveMessage() {
   if ($request->isSetVisibilityTimeout()) {
     $parameters->{"VisibilityTimeout"} =  $request->getVisibilityTimeout();
   }
+
+  # 8<---- rcl 11/21/2015 ----
+  if ($request->isSetWaitTimeSeconds()) {
+    $parameters->{"WaitTimeSeconds"} =  $request->getWaitTimeSeconds();
+  }
+  # 8<------------------------
+
   my $attributeNamereceiveMessageRequestList = $request->getAttributeName();
   for my $attributeNamereceiveMessageRequestIndex (0 .. $#{$attributeNamereceiveMessageRequestList}) {
     my $attributeNamereceiveMessageRequest = $attributeNamereceiveMessageRequestList->[$attributeNamereceiveMessageRequestIndex];
@@ -1238,9 +1268,20 @@ Elena@AWS
                                                                                          
 1;
 
-# $Id: Client.pm.in,v 1.2 2013/01/29 21:13:55 rlauer Exp $
+# $Id: Client.pm.in,v 1.3 2015/11/21 14:49:03 rlauer Exp $
 
 # $Log: Client.pm.in,v $
+# Revision 1.3  2015/11/21 14:49:03  rlauer
+# - added long polling support.  Long polling cause the HTTP request for messages on the
+# queue to block for up to 20 seconds (at the server end).  This will allow us to shorten
+# the sleep time between message reads. This functionality can decrease the number of reads
+# you need to make, or simply make your queue handler more responsive.
+#
+# To implement long polling, I added a new parameter to the Amazon::SQS::Model::ReceiveMessageRequest
+# constructor.  This new parameter (WaitTimeSeconds) is only available for the API version
+# '2012-11-05', so I also hacked the Amazon::SQS::Client and related methods to be able to
+# specify an alternate API version.
+#
 # Revision 1.2  2013/01/29 21:13:55  rlauer
 # - update pod
 #
