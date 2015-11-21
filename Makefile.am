@@ -12,4 +12,5 @@ dist_aws_sqs_DATA = \
     ChangeLog \
     COPYING \
     NEWS \
-    README.md
+    README.md \
+	required-modules
