@@ -19,7 +19,6 @@ incantations.
 $ ./configure --prefix=/usr --with-sysconfdir=/etc/
 $ make
 ```
-
 ...then
 
 ```
@@ -46,11 +45,13 @@ This is a fork of the `Amazon::SQS::Client` package distributed by
 Amazon a few years ago (2009).  Perl is no longer a first-class
 citizen in the halls of the AWS SDK development wing, so it is
 up to the Perl community to hack-patch these modules or write new ones
-(like `PAWS`) to fill the void.
+(like the CPAN module `PAWS`) to fill the void.
 
-I like the fact that this is a relatively light weight module, albeit
-not very easy to use from an SDK perspective.  Here's how to list a
-queue for example:
+I like the fact that this set of modules is a relatively light weight
+and require only a few extra Perl modules rather than a heavy weight
+solution like `PAWS` that requires `Moose` and it's assorted friends.
+These modules are pretty low-level and a little verbose to use.
+Here's and example getting a list of SQS queues:
 
 ```
 my $sqs = Amazon::SQS::Client->new($ENV{AWS_ACCESS_KEY_ID}, $ENV{AWS_SECRET_ACCESS_KEY},
@@ -62,20 +63,20 @@ my $queues_result = $response->getListQueuesResult();
 my $queues = $queues_result->getQueueUrl();
 ```
 
+As they say, there's no free lunch, so if you don't mind the verbosity
+and light-weight is your goal...keep reading.
+
 # HACKS TO ORIGINAL PROJECT
 
-1. Create an RPM - this project will help you create an RPM
-2. An example queue daemon - this project presents an example daemon
-for handling SQS messages (`QueueDaemon.pl`).
+1. This project can create an RPM - I've include a working `.spec`
+file.
+2. An example queue daemon - this project includes a so-called
+"queue worker" in the form of an example daemon for handling SQS
+messages (`QueueDaemon.pl`).
 3. Long polling - support for API version 2012-11-05 `WaitTimeSeconds`
 parameter to the `ReceiveMessage` API call.
 4. Support for temporary security tokens.
 5. Support for Signature Version 4 (via AWS::Signature4)
-
-*Note there has been no attempt to update all of the API calls to
-support differences between version 2009-02-01 of the API and
-2012-11-05 version other than adding `WaitTimeSeconds` to the
-parameter list for `Amazon::SQS::Model::ReceiveMessageRequest`.*
 
 # MORE DETAILS
 
@@ -95,6 +96,9 @@ parameter list for `Amazon::SQS::Model::ReceiveMessageRequest`.*
 * URI::Escape
 * XML::Simple
 
+You can try this, but your RPM repos might not have all of those
+symbols.  If you're stuck, use `cpanm` (`App::cpanminus`).
+
 ```
 $ for a in $(cat required-modules); do sudo yum install -y 'perl'($a')'; done
 ```
@@ -102,8 +106,9 @@ $ for a in $(cat required-modules); do sudo yum install -y 'perl'($a')'; done
 ## QUICK INSTALL
 
 ```
-$ ./configure --prefix=/usr
-$ sudo make && make install
+$ ./configure --prefix=/usr --sysconfdir=/etc
+$ make
+$ sudo make install
 ```
 
 ## RPM BUILDING
