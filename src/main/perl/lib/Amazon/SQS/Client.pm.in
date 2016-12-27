@@ -40,7 +40,10 @@ use URI;
 use URI::Escape;
 use Time::HiRes qw(usleep);
 use XML::Simple;
+use Scalar::Util qw/reftype/;
 use Data::Dumper;
+
+require AWS::Signature4;
 
 my $SERVICE_VERSION = "2012-11-05";
 
@@ -62,13 +65,9 @@ my $SERVICE_VERSION = "2012-11-05";
                                                             MessageBody => $message
                                                            }
                                                           );
- my $response;
-
  # submit the request and get a response
- eval {
-  $response = $aws_client->sendMessage( $request );
- };
-
+ my $response = $aws_client->sendMessage($request);
+ 
 =head1 DESCRIPTION
 
 C<Amazon::SQS::Client> is the implementation of a service API to
@@ -94,7 +93,7 @@ with the same technologies, or running at the same time.
 
 =head2 new 
 
- new( aws-access-key-id, aws-secret-access-key, config )
+ new( aws-access-key-id, aws-secret-access-key, [config] )
 
 =over 5
 
@@ -116,7 +115,7 @@ C<config> is an optional hash reference containing the options listed below.
 
 =item * ServiceURL
 
-default: C<https://queue.amazonaws.com>
+default: C<https://sqs.amazonaws.com>
 
 =item * UserAgent
 
@@ -125,6 +124,11 @@ default: Amazon SQS Perl Library
 =item * SignatureVersion
 
 default: 2
+
+I<Note: Signature Version 4 is supported by AWS::Signature4. If you
+use the Signature 4 signing facility, make sure your ServiceURL
+includes the region endpoint.  Ex:
+https://sqs.us-east-1.amazonaws.com.>
 
 =item * SecurityToken
 
@@ -155,8 +159,12 @@ default: -1
 
 sub new {
   my ($class, $awsAccessKeyId, $awsSecretAccessKey, $config) = @_;
+  
+  die "usage: new Amazon::SQS::Client(<your-access-key>, <your-secret-key>, [ config ])\n"
+    unless $awsAccessKeyId && $awsSecretAccessKey;
+  
   my $defaultConfig =  {
-			ServiceURL       => "https://queue.amazonaws.com",
+			ServiceURL       => "https://sqs.amazonaws.com",
 			UserAgent        => "Amazon SQS Perl Library",
 			SignatureVersion => 2,
 			SignatureMethod  => "HmacSHA256",
@@ -171,9 +179,17 @@ sub new {
   $self->{_awsAccessKeyId} = $awsAccessKeyId;
   $self->{_awsSecretAccessKey} = $awsSecretAccessKey;
   $self->{_config} = $defaultConfig;
-  $self->{_config} = {%$defaultConfig, %$config} if defined ($config);
+  $self->{_config} = {%$defaultConfig, %$config} if ref($config) && reftype($config) eq 'HASH';
   $self->{_awsSecurityToken} = $self->{_config}->{SecurityToken};
-
+  
+  if ( $self->{_config}->{SignatureVersion} eq '4' ) {
+    $self->{_v4_signer} = AWS::Signature4->new(
+					       '-access_key' => $self->{_awsAccessKeyId},
+					       '-secret_key' => $self->{_awsSecretAccessKey},
+					       $self->{_awsSecurityToken} ? ('-security_token' => $self->{_awsSecurityToken}) : ()
+					      );
+  }
+  
   return bless ($self, $class);
 }
 
@@ -810,9 +826,8 @@ sub _reportAnyErrors {
 #
 sub _httpPost {
   my ($self, $queueUrl, $parameters) = @_;
-
   my $url = $queueUrl;
-
+  
   require LWP::UserAgent;
   my $ua = LWP::UserAgent->new;
   my $request= HTTP::Request->new("POST", $url);
@@ -828,6 +843,11 @@ sub _httpPost {
 
   chop ($data);
   $request->content($data);
+  
+  if ( defined $self->{_v4_signer} ) {
+    $self->{_v4_signer}->sign($request);
+  }
+  
   my $response = $ua->request($request);
   return $response;
 }
@@ -837,13 +857,18 @@ sub _httpPost {
 #
 sub _addRequiredParameters {
   my ($self,  $parameters, $queueUrl) = @_;
+  
   $parameters->{AWSAccessKeyId} = $self->{_awsAccessKeyId};
   $parameters->{Timestamp} = $self->_getFormattedTimestamp();
   $parameters->{Version} = $self->{_config}->{ServiceVersion};
-  $parameters->{SignatureVersion} = $self->{_config}->{SignatureVersion} || "1";
-  $parameters->{SecurityToken} = $self->token if $self->token;
-  $parameters->{Signature} = $self->_signParameters($parameters, $queueUrl, $self->{_awsSecretAccessKey});
 
+  # v2 signing
+  unless ( defined $self->{_v4_signer} ) {
+    $parameters->{SignatureVersion} = $self->{_config}->{SignatureVersion} || "1";
+    $parameters->{SecurityToken} = $self->token if $self->token;
+    $parameters->{Signature} = $self->_signParameters($parameters, $queueUrl, $self->{_awsSecretAccessKey});
+  }
+  
   return $parameters;
 }
 
@@ -1147,11 +1172,9 @@ sub _convertReceiveMessage() {
     $parameters->{"VisibilityTimeout"} =  $request->getVisibilityTimeout();
   }
 
-  # 8<---- rcl 11/21/2015 ----
   if ($request->isSetWaitTimeSeconds()) {
     $parameters->{"WaitTimeSeconds"} =  $request->getWaitTimeSeconds();
   }
-  # 8<------------------------
 
   my $attributeNamereceiveMessageRequestList = $request->getAttributeName();
   for my $attributeNamereceiveMessageRequestIndex (0 .. $#{$attributeNamereceiveMessageRequestList}) {
