@@ -22,6 +22,7 @@ $ make
 
 ...then
 
+```
 $ cd src/main/perl
 $ perl Makefile.PL
 $ make test
