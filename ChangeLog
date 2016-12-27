@@ -1,3 +1,20 @@
+2016-12-26  Rob Lauer <rlauer6@comcast.net>
+	* src/main/perl/lib/Amazon/SQS/Client.pm.in
+	- Signature Version 4 via AWS::Signature4
+	* src/main/perl/t/test-01.t: new
+	* src/main/perl/MANIFEST: new
+	* src/main/perl/Makefile.PL: new
+
+2016-12-26  Rob Lauer <rlauer6@comcast.net>
+	* src/main/perl/lib/Amazon/SQS/Client.pm.in
+	- ServiceVersion (2012-11-05)
+	* src/main/perl/lib/Amazon/SQS/Config.pm.in
+	- $VERSION
+	- copyright
+	* src/main/perl/lib/Amazon/SQS/Model/ReceiveMessageRequest.pm.in: copyright
+	* configure.ac: bump version
+	* README.md: cleanup
+
 2015-11-21  Rob Lauer <rlauer6@comcast.net>
 	* README.md: new from README
 	* configure.ac: LWP::Protocol::https, Crypt::SSLeay
