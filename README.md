@@ -16,14 +16,15 @@ recommended way and install the project using the Perl standard
 incantations.
 
 ```
-$ ./configure --prefix=/usr --with-sysconfdir=/etc/
+$ ./configure --with-sysconfdir=/etc/
 $ make
+$ sudo make install
 ```
 ...then
 
 ```
-$ cd src/main/perl
-$ perl Makefile.PL
+$ cd /usr/share/perl-Amazon-SQS-Client/perl-dist
+$ sudo perl Makefile.PL
 $ make test
 $ sudo make install
 ```
@@ -48,10 +49,10 @@ up to the Perl community to hack-patch these modules or write new ones
 (like the CPAN module `PAWS`) to fill the void.
 
 I like the fact that this set of modules is a relatively light weight
-and require only a few extra Perl modules rather than a heavy weight
+and requires only a few extra Perl modules rather than a heavy weight
 solution like `PAWS` that requires `Moose` and it's assorted friends.
-These modules are pretty low-level and a little verbose to use.
-Here's and example getting a list of SQS queues:
+These modules are pretty low-level and a little verbose to use though.
+Here's an example that retrieves a list of SQS queues:
 
 ```
 my $sqs = Amazon::SQS::Client->new($ENV{AWS_ACCESS_KEY_ID}, $ENV{AWS_SECRET_ACCESS_KEY},
