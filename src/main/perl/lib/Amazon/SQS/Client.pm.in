@@ -47,6 +47,13 @@ require AWS::Signature4;
 
 my $SERVICE_VERSION = "2012-11-05";
 
+use vars qw/@ISA @EXPORT_OK/;
+
+@ISA = qw/Exporter/;
+@EXPORT_OK = qw/$VERSION/;
+
+our $VERSION = '0.01';
+
 =pod
 
 =head1 NAME
