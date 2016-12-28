@@ -36,7 +36,7 @@ subdir = .
 DIST_COMMON = $(am__configure_deps) $(dist_aws_sqs_DATA) \
 	$(dist_noinst_DATA) $(srcdir)/${PACKAGE_NAME}.spec.in \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(top_srcdir)/configure AUTHORS COPYING ChangeLog INSTALL NEWS \
+	$(top_srcdir)/configure AUTHORS COPYING ChangeLog NEWS \
 	autotools/install-sh autotools/missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/autotools/ads_PERL_INCLUDES.m4 \
