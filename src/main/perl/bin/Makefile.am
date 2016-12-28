@@ -8,7 +8,7 @@ ax_perl5_extra_includes_opt = @ax_perl5_extra_includes_opt@
 aws_sqsdir = @datadir@/amazon-web-services/sqs
 examplesdir = $(aws_sqsdir)/examples
 
-libexec_SCRIPTS = \
+bin_SCRIPTS = \
     QueueDaemon.pl
 
 PERLSCRIPTS = \
