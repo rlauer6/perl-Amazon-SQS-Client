@@ -13,7 +13,7 @@ prog=aws-sqsd
 start() {
     echo -n $"Starting $prog: "
 
-    /usr/libexec/QueueDaemon.pl --config=/usr/share/amazon-web-services/sqs/aws-sqs.ini
+    @bindir@/QueueDaemon.pl --config=/usr/share/amazon-web-services/sqs/aws-sqs.ini
 
     sleep 1;
 
