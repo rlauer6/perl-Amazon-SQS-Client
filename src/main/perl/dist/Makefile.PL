@@ -4,6 +4,7 @@ WriteMakefile(
 	      NAME => 'Amazon::SQS',
 	      AUTHOR => 'bigfoot',
 	      VERSION_FROM => 'lib/Amazon/SQS/Client.pm',
+	      EXE_FILES => [ 'bin/QueueDaemon.pl', 'bin/aws-sqsd' ],
 	      PREREQ_PM => {
 			    "AppConfig"       => "0",
 			    "AWS::Signature4" => "0",

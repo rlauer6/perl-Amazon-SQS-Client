@@ -2,6 +2,7 @@ Makefile.PL
 t/test-01.t
 MANIFEST
 bin/QueueDaemon.pl
+bin/aws-sqsd
 lib/Amazon/SQS/Exception.pm
 lib/Amazon/SQS/Config.pm
 lib/Amazon/SQS/Model/GetQueueAttributesRequest.pm
