@@ -109,15 +109,19 @@ AC_SUBST([perl5libdir])
 
 dnl something just to make autoconf include the autotools/ads_ stuff in the distribution
 ads_PERL_MODULE([AppConfig])
-ads_PERL_MODULE([Crypt::SSLeay])
+ads_PERL_MODULE([AWS::Signature4])
+ads_PERL_MODULE([Carp])
+ads_PERL_MODULE([Cwd])
 ads_PERL_MODULE([Data::Dumper])
 ads_PERL_MODULE([Digest::SHA])
+ads_PERL_MODULE([File::Basename])
 ads_PERL_MODULE([Getopt::Long])
-ads_PERL_MODULE([LWP::Protocol::https])
 ads_PERL_MODULE([LWP::UserAgent])
 ads_PERL_MODULE([Proc::Daemon])
 ads_PERL_MODULE([Proc::PID::File])
+ads_PERL_MODULE([Scalar::Util])
 ads_PERL_MODULE([Time::HiRes])
+ads_PERL_MODULE([URI])
 ads_PERL_MODULE([URI::Escape])
 ads_PERL_MODULE([XML::Simple])
 
@@ -133,6 +137,7 @@ AC_CONFIG_FILES([
     src/main/perl/Makefile
     src/main/perl/bin/Makefile
     src/main/perl/lib/Makefile
+    src/main/perl/dist/Makefile
     ${PACKAGE_NAME}.spec
 ])
 
