@@ -20,6 +20,11 @@ AMAZON_SQS_MODEL = \
     Amazon/SQS/Model/AddPermissionRequest.pm.in \
     Amazon/SQS/Model/AddPermissionResponse.pm.in \
     Amazon/SQS/Model/Attribute.pm.in \
+    Amazon/SQS/Model/ChangeMessageVisibilityBatchRequest.pm.in \
+    Amazon/SQS/Model/ChangeMessageVisibilityBatchRequestEntry.pm.in \
+    Amazon/SQS/Model/ChangeMessageVisibilityBatchResponse.pm.in \
+    Amazon/SQS/Model/ChangeMessageVisibilityBatchResult.pm.in \
+    Amazon/SQS/Model/ChangeMessageVisibilityBatchResultEntry.pm.in \
     Amazon/SQS/Model/ChangeMessageVisibilityRequest.pm.in \
     Amazon/SQS/Model/ChangeMessageVisibilityResponse.pm.in \
     Amazon/SQS/Model/CreateQueueRequest.pm.in \
