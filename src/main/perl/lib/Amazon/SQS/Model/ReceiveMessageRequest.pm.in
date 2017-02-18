@@ -40,7 +40,8 @@ use base qw (Amazon::SQS::Model);
 # WaitTimeSeconds: int
 # VisibilityTimeout: int
 # AttributeName: string
-#
+# MessageAttributeName: ["string"]
+# ReceiveRequestAttemptId: "string"
 # 
 # 
 
@@ -54,6 +55,8 @@ sub new {
 		      WaitTimeSeconds     => { FieldValue => undef, FieldType => "int"}, # rcl 11/21/2015
 		      VisibilityTimeout   => { FieldValue => undef, FieldType => "int"},
 		      AttributeName       => { FieldValue => [],    FieldType => ["string"]},
+		      MessageAttributeName => { FieldValue => [], FieldType => ["string"]},
+		      ReceiveRequestAttemptId => { FieldValue => undef, FieldType => "string"}
 		     };
   
   bless ($self, $class);
@@ -110,6 +113,31 @@ sub new {
 
     sub isSetQueueUrl {
         return defined (shift->{_fields}->{QueueUrl}->{FieldValue});
+    }
+
+
+    sub getReceiveRequestAttemptId {
+      return shift->{_fields}->{ReceiveRequestAttemptId}->{FieldValue};
+    }
+
+
+    sub setReceiveRequestAttemptId {
+        my ($self, $value) = @_;
+
+        $self->{_fields}->{ReceiveRequestAttemptId}->{FieldValue} = $value;
+        return $self;
+    }
+
+
+    sub withReceiveRequestAttemptId {
+        my ($self, $value) = @_;
+        $self->setReceiveRequestAttemptId($value);
+        return $self;
+    }
+
+
+    sub isSetReceiveRequestAttemptId {
+        return defined (shift->{_fields}->{ReceiveRequestAttemptId}->{FieldValue});
     }
 
 
@@ -189,6 +217,32 @@ sub new {
         return scalar (@{shift->{_fields}->{AttributeName}->{FieldValue}}) > 0;
     }
 
+    sub getMessageAttributeName {
+        return shift->{_fields}->{MessageAttributeName}->{FieldValue};
+    }
+
+
+    sub setMessageAttributeName    {
+        my ($self, $value) = @_;
+        $self->{_fields}->{MessageAttributeName}->{FieldValue} = $value;
+        return $self;
+    }
+
+
+
+    sub withMessageAttributeName {
+        my $self = shift;
+            my $list = $self->{_fields}->{MessageAttributeName}->{FieldValue};
+            for (@_) {
+                push (@$list, $_);
+            }
+        return $self;
+    }  
+      
+
+    sub isSetMessageAttributeName {
+        return scalar (@{shift->{_fields}->{MessageAttributeName}->{FieldValue}}) > 0;
+    }
 
 
 
