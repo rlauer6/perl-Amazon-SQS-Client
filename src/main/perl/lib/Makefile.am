@@ -20,6 +20,8 @@ AMAZON_SQS_MODEL = \
     Amazon/SQS/Model/AddPermissionRequest.pm.in \
     Amazon/SQS/Model/AddPermissionResponse.pm.in \
     Amazon/SQS/Model/Attribute.pm.in \
+    Amazon/SQS/Model/MessageAttribute.pm.in \
+    Amazon/SQS/Model/MessageAttributeValue.pm.in \
     Amazon/SQS/Model/ChangeMessageVisibilityBatchRequest.pm.in \
     Amazon/SQS/Model/ChangeMessageVisibilityBatchRequestEntry.pm.in \
     Amazon/SQS/Model/ChangeMessageVisibilityBatchResponse.pm.in \
@@ -30,6 +32,11 @@ AMAZON_SQS_MODEL = \
     Amazon/SQS/Model/CreateQueueRequest.pm.in \
     Amazon/SQS/Model/CreateQueueResponse.pm.in \
     Amazon/SQS/Model/CreateQueueResult.pm.in \
+    Amazon/SQS/Model/DeleteMessageBatchRequest.pm.in \
+    Amazon/SQS/Model/DeleteMessageBatchRequestEntry.pm.in \
+    Amazon/SQS/Model/DeleteMessageBatchResponse.pm.in \
+    Amazon/SQS/Model/DeleteMessageBatchResult.pm.in \
+    Amazon/SQS/Model/DeleteMessageBatchResultEntry.pm.in \
     Amazon/SQS/Model/DeleteMessageRequest.pm.in \
     Amazon/SQS/Model/DeleteMessageResponse.pm.in \
     Amazon/SQS/Model/DeleteQueueRequest.pm.in \
@@ -42,6 +49,9 @@ AMAZON_SQS_MODEL = \
     Amazon/SQS/Model/ListQueuesRequest.pm.in \
     Amazon/SQS/Model/ListQueuesResponse.pm.in \
     Amazon/SQS/Model/ListQueuesResult.pm.in \
+    Amazon/SQS/Model/ListDeadLetterSourceQueuesRequest.pm.in \
+    Amazon/SQS/Model/ListDeadLetterSourceQueuesResponse.pm.in \
+    Amazon/SQS/Model/ListDeadLetterSourceQueuesResult.pm.in \
     Amazon/SQS/Model/Message.pm.in \
     Amazon/SQS/Model/ReceiveMessageRequest.pm.in \
     Amazon/SQS/Model/ReceiveMessageResponse.pm.in \
