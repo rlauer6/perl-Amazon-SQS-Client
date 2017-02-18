@@ -1,3 +1,88 @@
+2017-02-18  Rob Lauer <rlauer6@comcast.net>
+	[changes to support API version 2012-11-05]:
+	* src/main/perl/lib/Amazon/SQS/Model/DeleteMessageBatchRequest.pm.in: new
+	* src/main/perl/lib/Amazon/SQS/Model/DeleteMessageBatchRequestEntry.pm.in: new
+	* src/main/perl/lib/Amazon/SQS/Model/DeleteMessageBatchResponse.pm.in: new
+	* src/main/perl/lib/Amazon/SQS/Model/DeleteMessageBatchResult.pm.in: new
+	* src/main/perl/lib/Amazon/SQS/Model/DeleteMessageBatchResultEntry.pm.in: new
+	* src/main/perl/lib/Amazon/SQS/Model/ListDeadLetterSourceQueuesRequest.pm.in: new
+	* src/main/perl/lib/Amazon/SQS/Model/ListDeadLetterSourceQueuesResponse.pm.in: new
+	* src/main/perl/lib/Amazon/SQS/Model/ListDeadLetterSourceQueuesResult.pm.in: new
+	* src/main/perl/lib/Amazon/SQS/Model/MessageAttribute.pm.in: new
+	* src/main/perl/lib/Amazon/SQS/Model/MessageAttributeValue.pm.in: new
+	* src/main/perl/lib/Amazon/SQS/Client.pm.in
+	- remove print statements
+	(new): reuse the LWP::UserAgent object
+	(listDeadLetterSourceQueues): new
+	(_convertListDeadLetterSourceQueues): new
+	(changeMessageVisibilityBatch): new
+	(_convertChangeMessageVisibilityBatch): new
+	(deleteMessageBatch): new
+	(_convertDeleteMessageBatch): new
+	(_convertReceiveMessage(): unload message attributes
+	(_httpPost): use cached UserAgent
+	(_convertSendMessage): support additional parameters (MessageDuplicationId, MessageGroupId, MessageAtributeN, DelaySeconds)
+	* src/main/perl/lib/Makefile.am
+	- addded all of the new modules to build
+	* src/main/perl/lib/Amazon/SQS/Model/ChangeMessageVisibilityBatchResponse.pm.in
+	- remove print statement
+	* src/main/perl/lib/Amazon/SQS/Model/ChangeMessageVisibilityRequest.pm.in: whitespace
+	* src/main/perl/lib/Amazon/SQS/Model/ChangeMessageVisibilityResponse.pm.in: whitespace
+
+	[message attributes]:
+	* src/main/perl/lib/Amazon/SQS/Model/Message.pm.in
+	(new): MessageAttribute
+	(withMessageAttribute): new
+	(isSetMessageAttribute): new
+	(setMessageAttribute): new
+	(getMessageAttribute): new
+
+	[new parameters]:
+	* src/main/perl/lib/Amazon/SQS/Model/ReceiveMessageRequest.pm.in
+	(new): MessageAttributeName, ReceiveRequestAttemptId
+	(withMessageAttributeName): new
+	(isSetMessageAttributeName): new
+	(setMessageAttributeName): new
+	(getMessageAttributeName): new
+	(withReceiveRequestAttemptId): new
+	(isSetReceiveRequestAttemptId): new
+	(setReceiveRequestAttemptId): new
+	(getReceiveRequestAttemptId): new
+
+	[new parameters]:
+	* src/main/perl/lib/Amazon/SQS/Model/SendMessageRequest.pm.in
+	(new): DelaySeconds, MessageDuplicationId, MessageGroupId, MessageAttribute
+	(withMessageAttribute): new
+	(isSetMessageAttribute): new
+	(setMessageAttribute): new
+	(getMessageAttribute): new
+
+	(withDelaySeconds): new
+	(isSetDelaySeconds): new
+	(setDelaySeconds): new
+	(getDelaySeconds): new
+
+	(withMessageDuplicationId): new
+	(isSetMessageDuplicationId): new
+	(setMessageDuplicationId): new
+	(getMessageDuplicationId): new
+
+	(withMessageGroupId): new
+	(isSetMessageGroupId): new
+	(setMessageGroupId): new
+	(getMessageGroupId): new
+
+	* perl-Amazon-SQS-Client.spec.in
+	- list /usr assets
+	- added /usr/share
+	* src/main/perl/dist/Makefile.am
+	- include t/test-01 in distribution
+	- include Makefile.PL, etc in distribution
+	- moved aws-sqsd to bash/bin
+	* src/main/Makefile.am: build bash stuff first
+	* README.md: TODO section
+	* NEWS: update for push
+
 2016-12-26  Rob Lauer <rlauer6@comcast.net>
 	* src/main/perl/lib/Amazon/SQS/Client.pm.in
 	- Signature Version 4 via AWS::Signature4
