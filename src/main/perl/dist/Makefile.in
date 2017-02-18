@@ -33,7 +33,8 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 subdir = src/main/perl/dist
-DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
+DIST_COMMON = $(dist_perldist_DATA) $(dist_perldist_t_DATA) \
+	$(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/autotools/ads_PERL_INCLUDES.m4 \
 	$(top_srcdir)/autotools/ads_PERL_MODULE.m4 \
@@ -76,13 +77,12 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(perldistdir)" \
-	"$(DESTDIR)$(perldist_bindir)" \
+	"$(DESTDIR)$(perldist_tdir)" "$(DESTDIR)$(perldist_bindir)" \
 	"$(DESTDIR)$(perldist_lib_Modeldir)" \
-	"$(DESTDIR)$(perldist_lib_SQSdir)" \
-	"$(DESTDIR)$(perldist_tdir)"
-DATA = $(perldist_DATA) $(perldist_bin_DATA) \
-	$(perldist_lib_Model_DATA) $(perldist_lib_SQS_DATA) \
-	$(perldist_t_DATA)
+	"$(DESTDIR)$(perldist_lib_SQSdir)"
+DATA = $(dist_perldist_DATA) $(dist_perldist_t_DATA) \
+	$(perldist_bin_DATA) $(perldist_lib_Model_DATA) \
+	$(perldist_lib_SQS_DATA)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
@@ -201,16 +201,16 @@ perldist_lib_SQSdir = $(perldistdir)/lib/Amazon/SQS
 perldist_lib_Modeldir = $(perldistdir)/lib/Amazon/SQS/Model
 perldist_bindir = $(perldistdir)/bin
 perldist_tdir = $(perldistdir)/t
-perldist_DATA = \
+dist_perldist_DATA = \
     Makefile.PL \
     MANIFEST
 
-perldist_t_DATA = \
+dist_perldist_t_DATA = \
     ../t/test-01.t
 
 perldist_bin_DATA = \
     ../bin/QueueDaemon.pl \
-    ../bin/aws-sqsd
+    ../../bash/bin/aws-sqsd
 
 perldist_lib_SQS_DATA = \
     ../lib/Amazon/SQS/Exception.pm \
@@ -285,10 +285,10 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-install-perldistDATA: $(perldist_DATA)
+install-dist_perldistDATA: $(dist_perldist_DATA)
 	@$(NORMAL_INSTALL)
 	test -z "$(perldistdir)" || $(MKDIR_P) "$(DESTDIR)$(perldistdir)"
-	@list='$(perldist_DATA)'; test -n "$(perldistdir)" || list=; \
+	@list='$(dist_perldist_DATA)'; test -n "$(perldistdir)" || list=; \
 	for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  echo "$$d$$p"; \
@@ -298,13 +298,33 @@ install-perldistDATA: $(perldist_DATA)
 	  $(INSTALL_DATA) $$files "$(DESTDIR)$(perldistdir)" || exit $$?; \
 	done
 
-uninstall-perldistDATA:
+uninstall-dist_perldistDATA:
 	@$(NORMAL_UNINSTALL)
-	@list='$(perldist_DATA)'; test -n "$(perldistdir)" || list=; \
+	@list='$(dist_perldist_DATA)'; test -n "$(perldistdir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	test -n "$$files" || exit 0; \
 	echo " ( cd '$(DESTDIR)$(perldistdir)' && rm -f" $$files ")"; \
 	cd "$(DESTDIR)$(perldistdir)" && rm -f $$files
+install-dist_perldist_tDATA: $(dist_perldist_t_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(perldist_tdir)" || $(MKDIR_P) "$(DESTDIR)$(perldist_tdir)"
+	@list='$(dist_perldist_t_DATA)'; test -n "$(perldist_tdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(perldist_tdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(perldist_tdir)" || exit $$?; \
+	done
+
+uninstall-dist_perldist_tDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dist_perldist_t_DATA)'; test -n "$(perldist_tdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(perldist_tdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(perldist_tdir)" && rm -f $$files
 install-perldist_binDATA: $(perldist_bin_DATA)
 	@$(NORMAL_INSTALL)
 	test -z "$(perldist_bindir)" || $(MKDIR_P) "$(DESTDIR)$(perldist_bindir)"
@@ -365,26 +385,6 @@ uninstall-perldist_lib_SQSDATA:
 	test -n "$$files" || exit 0; \
 	echo " ( cd '$(DESTDIR)$(perldist_lib_SQSdir)' && rm -f" $$files ")"; \
 	cd "$(DESTDIR)$(perldist_lib_SQSdir)" && rm -f $$files
-install-perldist_tDATA: $(perldist_t_DATA)
-	@$(NORMAL_INSTALL)
-	test -z "$(perldist_tdir)" || $(MKDIR_P) "$(DESTDIR)$(perldist_tdir)"
-	@list='$(perldist_t_DATA)'; test -n "$(perldist_tdir)" || list=; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(perldist_tdir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(perldist_tdir)" || exit $$?; \
-	done
-
-uninstall-perldist_tDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(perldist_t_DATA)'; test -n "$(perldist_tdir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	test -n "$$files" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(perldist_tdir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(perldist_tdir)" && rm -f $$files
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run `make' without going through this Makefile.
@@ -584,7 +584,7 @@ check: check-recursive
 all-am: Makefile $(DATA)
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(perldistdir)" "$(DESTDIR)$(perldist_bindir)" "$(DESTDIR)$(perldist_lib_Modeldir)" "$(DESTDIR)$(perldist_lib_SQSdir)" "$(DESTDIR)$(perldist_tdir)"; do \
+	for dir in "$(DESTDIR)$(perldistdir)" "$(DESTDIR)$(perldist_tdir)" "$(DESTDIR)$(perldist_bindir)" "$(DESTDIR)$(perldist_lib_Modeldir)" "$(DESTDIR)$(perldist_lib_SQSdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-recursive
@@ -632,9 +632,9 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-perldistDATA install-perldist_binDATA \
-	install-perldist_lib_ModelDATA install-perldist_lib_SQSDATA \
-	install-perldist_tDATA
+install-data-am: install-dist_perldistDATA install-dist_perldist_tDATA \
+	install-perldist_binDATA install-perldist_lib_ModelDATA \
+	install-perldist_lib_SQSDATA
 
 install-dvi: install-dvi-recursive
 
@@ -678,9 +678,10 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-perldistDATA uninstall-perldist_binDATA \
+uninstall-am: uninstall-dist_perldistDATA \
+	uninstall-dist_perldist_tDATA uninstall-perldist_binDATA \
 	uninstall-perldist_lib_ModelDATA \
-	uninstall-perldist_lib_SQSDATA uninstall-perldist_tDATA
+	uninstall-perldist_lib_SQSDATA
 
 .MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) ctags-recursive \
 	install-am install-strip tags-recursive
@@ -689,19 +690,20 @@ uninstall-am: uninstall-perldistDATA uninstall-perldist_binDATA \
 	all all-am check check-am clean clean-generic ctags \
 	ctags-recursive distclean distclean-generic distclean-tags \
 	distdir dvi dvi-am html html-am info info-am install \
-	install-am install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-perldistDATA \
+	install-am install-data install-data-am \
+	install-dist_perldistDATA install-dist_perldist_tDATA \
+	install-dvi install-dvi-am install-exec install-exec-am \
+	install-html install-html-am install-info install-info-am \
+	install-man install-pdf install-pdf-am \
 	install-perldist_binDATA install-perldist_lib_ModelDATA \
-	install-perldist_lib_SQSDATA install-perldist_tDATA install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
-	pdf-am ps ps-am tags tags-recursive uninstall uninstall-am \
-	uninstall-perldistDATA uninstall-perldist_binDATA \
-	uninstall-perldist_lib_ModelDATA \
-	uninstall-perldist_lib_SQSDATA uninstall-perldist_tDATA
+	install-perldist_lib_SQSDATA install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-generic pdf pdf-am ps ps-am tags \
+	tags-recursive uninstall uninstall-am \
+	uninstall-dist_perldistDATA uninstall-dist_perldist_tDATA \
+	uninstall-perldist_binDATA uninstall-perldist_lib_ModelDATA \
+	uninstall-perldist_lib_SQSDATA
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
