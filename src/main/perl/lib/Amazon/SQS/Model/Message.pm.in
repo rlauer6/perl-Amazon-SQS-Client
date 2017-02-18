@@ -47,8 +47,9 @@ use base qw (Amazon::SQS::Model);
             MessageId => { FieldValue => undef, FieldType => "string"},
             ReceiptHandle => { FieldValue => undef, FieldType => "string"},
             MD5OfBody => { FieldValue => undef, FieldType => "string"},
-            Body => { FieldValue => undef, FieldType => "string"},
-            Attribute => {FieldValue => [], FieldType => ["Amazon::SQS::Model::Attribute"]},
+	    Body => { FieldValue => undef, FieldType => "string"},
+			    
+            MessageAttribute => {FieldValue => [], FieldType => ["Amazon::SQS::Model::MessageAttribute"]},
         };
 
         bless ($self, $class);
@@ -159,32 +160,32 @@ use base qw (Amazon::SQS::Model);
         return defined (shift->{_fields}->{Body}->{FieldValue});
     }
 
-    sub getAttribute {
-        return shift->{_fields}->{Attribute}->{FieldValue};
+    sub getMessageAttribute {
+        return shift->{_fields}->{MessageAttribute}->{FieldValue};
     }
 
-    sub setAttribute {
+    sub setMessageAttribute {
         my $self = shift;
         foreach my $attribute (@_) {
             if (not $self->_isArrayRef($attribute)) {
                 $attribute =  [$attribute];    
             }
-            $self->{_fields}->{Attribute}->{FieldValue} = $attribute;
+            $self->{_fields}->{MessageAttribute}->{FieldValue} = $attribute;
         }
     }
 
 
-    sub withAttribute {
+    sub withMessageAttribute {
         my ($self, $attributeArgs) = @_;
         foreach my $attribute (@$attributeArgs) {
-            $self->{_fields}->{Attribute}->{FieldValue} = $attribute;
+            $self->{_fields}->{MessageAttribute}->{FieldValue} = $attribute;
         }
         return $self;
     }   
 
 
-    sub isSetAttribute {
-        return  scalar (@{shift->{_fields}->{Attribute}->{FieldValue}}) > 0;
+    sub isSetMessageAttribute {
+        return  scalar (@{shift->{_fields}->{MessageAttribute}->{FieldValue}}) > 0;
     }
 
 
