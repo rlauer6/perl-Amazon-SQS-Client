@@ -55,5 +55,10 @@ make install DESTDIR=%{buildroot}
 
 %files
 %defattr(-,root,root)
-/usr
+
+/usr/bin/QueueDaemon.pl
+/usr/libexec/aws-sqsd
+/usr/local/share
+/usr/share
+
 /etc/rc.d/init.d/aws-sqsd
