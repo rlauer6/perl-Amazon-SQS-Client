@@ -68,8 +68,6 @@ sub fromXML {
   my $tree = XML::Simple::XMLin ($xml);
   
   # TODO: check valid XML (is this a response XML?)
-  print STDERR $xml;
-  
   return new Amazon::SQS::Model::ChangeMessageVisibilityBatchResponse($tree);
           
 }
