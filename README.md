@@ -79,6 +79,10 @@ parameter to the `ReceiveMessage` API call.
 4. Support for temporary security tokens.
 5. Support for Signature Version 4 (via AWS::Signature4)
 
+# TODO
+
+Add support of batch operations.
+
 # MORE DETAILS
 
 ## REQUIRED PERL MODULES
