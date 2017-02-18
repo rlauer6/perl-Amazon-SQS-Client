@@ -772,7 +772,6 @@ sub _invoke {
       # Submit the request and read response body #
       eval {
 	$response = $self->_httpPost($queueUrl, $parameters);
-	print Dumper [ $response ];
 	if ($response->is_success) {
 	  $shouldRetry = 0;
 	} 
@@ -1099,7 +1098,7 @@ sub _convertListQueues() {
 }
 
 #
-# Convert ListQueuesRequest to name value pairs
+# Convert ListDeadLetterSourceQueues to name value pairs
 #
 sub _convertListDeadLetterSourceQueues() {
   my ($self, $request) = @_;
@@ -1348,7 +1347,7 @@ sub _convertSendMessage() {
 
  
   if ($request->isSetMessageDuplicationId()) {
-    $parameters->{"MessageDupliationId"} =  $request->getMessageDuplicationId();
+    $parameters->{"MessageDuplicationId"} =  $request->getMessageDuplicationId();
   }
 
  
