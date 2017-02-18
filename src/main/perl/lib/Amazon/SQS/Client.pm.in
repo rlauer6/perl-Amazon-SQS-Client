@@ -189,6 +189,11 @@ sub new {
   $self->{_config} = {%$defaultConfig, %$config} if ref($config) && reftype($config) eq 'HASH';
   $self->{_awsSecurityToken} = $self->{_config}->{SecurityToken};
   
+  unless ( ref($self->{_config}->{UserAgent}) ) {
+    require LWP::UserAgent;
+    $self->{_config}->{UserAgent} = LWP::UserAgent->new;
+  }
+  
   if ( $self->{_config}->{SignatureVersion} eq '4' ) {
     $self->{_v4_signer} = AWS::Signature4->new(
 					       '-access_key' => $self->{_awsAccessKeyId},
@@ -297,6 +302,21 @@ sub listQueues {
   return Amazon::SQS::Model::ListQueuesResponse->fromXML($self->_invoke($self->_convertListQueues($request)));
 }
 
+sub listDeadLetterSourceQueues {
+  my ($self, $request) = @_;
+
+  if (not ref $request eq "Amazon::SQS::Model::ListDeadLetterSourceQueuesRequest") {
+    require Amazon::SQS::Model::ListDeadLetterSourceQueuesRequest;
+    $request = Amazon::SQS::Model::ListDeadLetterSourceQueuesRequest->new($request);
+  }
+
+  require Amazon::SQS::Model::ListDeadLetterSourceQueuesResponse;
+
+  return Amazon::SQS::Model::ListDeadLetterSourceQueuesResponse->fromXML($self->_invoke($self->_convertListDeadLetterSourceQueues($request)));
+}
+
+
+
 =pod
 
 =head2 addPermission
@@ -380,6 +400,20 @@ sub changeMessageVisibility {
 }
 
 
+sub changeMessageVisibilityBatch {
+  my ($self, $request) = @_;
+
+  if (not ref $request eq "Amazon::SQS::Model::ChangeMessageVisibilityBatchRequest") {
+    require Amazon::SQS::Model::ChangeMessageVisibilityBatchRequest;
+    $request = Amazon::SQS::Model::ChangeMessageVisibilityBatchRequest->new($request);
+  }
+
+  require Amazon::SQS::Model::ChangeMessageVisibilityBatchResponse;
+
+  return Amazon::SQS::Model::ChangeMessageVisibilityBatchResponse->fromXML($self->_invoke($self->_convertChangeMessageVisibilityBatch($request)));
+}
+
+
 =pod
 
 =head2 deleteMessage
@@ -422,6 +456,19 @@ sub deleteMessage {
   require Amazon::SQS::Model::DeleteMessageResponse;
 
   return Amazon::SQS::Model::DeleteMessageResponse->fromXML($self->_invoke($self->_convertDeleteMessage($request)));
+}
+
+sub deleteMessageBatch {
+  my ($self, $request) = @_;
+
+  if (not ref $request eq "Amazon::SQS::Model::DeleteMessageBatchRequest") {
+    require Amazon::SQS::Model::DeleteMessageBatchRequest;
+    $request = Amazon::SQS::Model::DeleteMessageBatchRequest->new($request);
+  }
+
+  require Amazon::SQS::Model::DeleteMessageBatchResponse;
+
+  return Amazon::SQS::Model::DeleteMessageBatchResponse->fromXML($self->_invoke($self->_convertDeleteMessageBatch($request)));
 }
 
 
@@ -725,6 +772,7 @@ sub _invoke {
       # Submit the request and read response body #
       eval {
 	$response = $self->_httpPost($queueUrl, $parameters);
+	print Dumper [ $response ];
 	if ($response->is_success) {
 	  $shouldRetry = 0;
 	} 
@@ -835,8 +883,8 @@ sub _httpPost {
   my ($self, $queueUrl, $parameters) = @_;
   my $url = $queueUrl;
   
-  require LWP::UserAgent;
-  my $ua = LWP::UserAgent->new;
+  my $ua = $self->{_config}->{UserAgent};
+
   my $request= HTTP::Request->new("POST", $url);
   $request->content_type("application/x-www-form-urlencoded; charset=utf-8");
 
@@ -851,6 +899,7 @@ sub _httpPost {
   chop ($data);
   $request->content($data);
   
+  # sign request here if v4 else, it is done in _addRequiredParameters()
   if ( defined $self->{_v4_signer} ) {
     $self->{_v4_signer}->sign($request);
   }
@@ -1048,7 +1097,25 @@ sub _convertListQueues() {
 
   return $parameters;
 }
+
+#
+# Convert ListQueuesRequest to name value pairs
+#
+sub _convertListDeadLetterSourceQueues() {
+  my ($self, $request) = @_;
         
+  my $parameters = {};
+  $parameters->{"Action"} = "ListDeadLetterSourceQueues";
+  
+  if ($request->isSetQueueUrl()) {
+    $parameters->{"QueueUrl"} = $request->getQueueUrl();
+  }
+  
+#  print STDERR Dumper [ $parameters ];
+  
+  return $parameters;
+}
+
                         
 #
 # Convert ChangeMessageVisibilityRequest to name value pairs
@@ -1076,12 +1143,45 @@ sub _convertChangeMessageVisibility() {
     if ($attributechangeMessageVisibilityRequest->isSetValue()) {
       $parameters->{"Attribute" . "."  . ($attributechangeMessageVisibilityRequestIndex + 1) . "." . "Value"} =  $attributechangeMessageVisibilityRequest->getValue();
     }
-
   }
 
   return $parameters;
 }
+
+
+sub _convertChangeMessageVisibilityBatch() {
+  my ($self, $request) = @_;
         
+  my $parameters = {};
+  $parameters->{"Action"} = "ChangeMessageVisibilityBatch";
+  
+  if ($request->isSetQueueUrl()) {
+    $parameters->{"QueueUrl"} =  $request->getQueueUrl();
+  }
+  
+  if ( $request->isSetBatchRequest() ) {
+    my $batchrequestchangeMessageVisibilityRequestList = $request->getBatchRequest();
+    
+    foreach my $batchrequestEntryIndex (0..$#{$batchrequestchangeMessageVisibilityRequestList}) {
+      my $batchrequestEntry =  $batchrequestchangeMessageVisibilityRequestList->[$batchrequestEntryIndex];
+      
+      if ($batchrequestEntry->isSetId()) {
+	$parameters->{"ChangeMessageVisibilityBatchRequestEntry" . "." . ($batchrequestEntryIndex + 1) . "." . "Id"} = $batchrequestEntry->getId();
+      }
+      
+      if ($batchrequestEntry->isSetReceiptHandle()) {
+	$parameters->{"ChangeMessageVisibilityBatchRequestEntry" . "." . ($batchrequestEntryIndex + 1) . "." . "ReceiptHandle"} = $batchrequestEntry->getReceiptHandle();
+      }
+      
+      if ($batchrequestEntry->isSetVisibilityTimeout()) {
+	$parameters->{"ChangeMessageVisibilityBatchRequestEntry" . "." . ($batchrequestEntryIndex + 1) . "." . "VisibilityTimeout"} = $batchrequestEntry->getVisibilityTimeout();
+      }
+    }
+  }
+
+  return $parameters;
+}
+
                         
 #
 # Convert DeleteMessageRequest to name value pairs
@@ -1111,7 +1211,37 @@ sub _convertDeleteMessage() {
 
   return $parameters;
 }
+
+sub _convertDeleteMessageBatch() {
+  my ($self, $request) = @_;
         
+  my $parameters = {};
+  $parameters->{"Action"} = "DeleteMessageBatch";
+  if ($request->isSetQueueUrl()) {
+    $parameters->{"QueueUrl"} =  $request->getQueueUrl();
+  }
+  
+  if ( $request->isSetDeleteMessageBatchRequestEntry() ) {
+    my $batchrequestList = $request->getDeleteMessageBatchRequestEntry();
+    
+    foreach my $batchrequestEntryIndex (0..$#{$batchrequestList}) {
+      my $batchrequestEntry =  $batchrequestList->[$batchrequestEntryIndex];
+      
+      if ($batchrequestEntry->isSetId()) {
+	$parameters->{"DeleteMessageBatchRequestEntry" . "." . ($batchrequestEntryIndex + 1) . "." . "Id"} = $batchrequestEntry->getId();
+      }
+      
+      if ($batchrequestEntry->isSetReceiptHandle()) {
+	$parameters->{"DeleteMessageBatchRequestEntry" . "." . ($batchrequestEntryIndex + 1) . "." . "ReceiptHandle"} = $batchrequestEntry->getReceiptHandle();
+      }
+    }
+  }
+
+#  print STDERR Dumper [$parameters];
+  
+  return $parameters;
+}
+
                         
 #
 # Convert DeleteQueueRequest to name value pairs
@@ -1189,6 +1319,13 @@ sub _convertReceiveMessage() {
     $parameters->{"AttributeName" . "."  . ($attributeNamereceiveMessageRequestIndex + 1)} =  $attributeNamereceiveMessageRequest;
   }
 
+  my $messageAttributeNamereceiveMessageRequestList = $request->getMessageAttributeName();
+  for my $messageAttributeNamereceiveMessageRequestIndex (0 .. $#{$messageAttributeNamereceiveMessageRequestList}) {
+    my $messageAttributeNamereceiveMessageRequest = $messageAttributeNamereceiveMessageRequestList->[$messageAttributeNamereceiveMessageRequestIndex];
+    $parameters->{"MessageAttributeName" . "."  . ($messageAttributeNamereceiveMessageRequestIndex + 1)} =  $messageAttributeNamereceiveMessageRequest;
+  }
+
+
   return $parameters;
 }
         
@@ -1204,19 +1341,46 @@ sub _convertSendMessage() {
   if ($request->isSetQueueUrl()) {
     $parameters->{"QueueUrl"} =  $request->getQueueUrl();
   }
+
   if ($request->isSetMessageBody()) {
     $parameters->{"MessageBody"} =  $request->getMessageBody();
   }
-  my $attributesendMessageRequestList = $request->getAttribute();
+
+ 
+  if ($request->isSetMessageDuplicationId()) {
+    $parameters->{"MessageDupliationId"} =  $request->getMessageDuplicationId();
+  }
+
+ 
+  if ($request->isSetMessageGroupId()) {
+    $parameters->{"MessageGroupId"} =  $request->getMessageGroupId();
+  }
+ 
+  if ($request->isSetDelaySeconds()) {
+    $parameters->{"DelaySeconds"} =  $request->getDelaySeconds();
+  }
+
+  my $attributesendMessageRequestList = $request->getMessageAttribute();
   for my $attributesendMessageRequestIndex (0 .. $#{$attributesendMessageRequestList}) {
     my $attributesendMessageRequest = $attributesendMessageRequestList->[$attributesendMessageRequestIndex];
+    
     if ($attributesendMessageRequest->isSetName()) {
-      $parameters->{"Attribute" . "."  . ($attributesendMessageRequestIndex + 1) . "." . "Name"} =  $attributesendMessageRequest->getName();
+      $parameters->{"MessageAttribute" . "."  . ($attributesendMessageRequestIndex + 1) . "." . "Name"} =  $attributesendMessageRequest->getName();
     }
-    if ($attributesendMessageRequest->isSetValue()) {
-      $parameters->{"Attribute" . "."  . ($attributesendMessageRequestIndex + 1) . "." . "Value"} =  $attributesendMessageRequest->getValue();
+    
+    my $value = $attributesendMessageRequest->getValue();
+    
+    if ($value->isSetDataType()) {
+      $parameters->{"MessageAttribute" . "."  . ($attributesendMessageRequestIndex + 1) . "." . "Value" . "." . "DataType"} =  $value->getDataType();
     }
 
+    if ($value->isSetStringValue()) {
+      $parameters->{"MessageAttribute" . "."  . ($attributesendMessageRequestIndex + 1) . "." . "Value" . "." . "StringValue"} =  $value->getStringValue();
+    }
+
+    if ($value->isSetBinaryValue()) {
+      $parameters->{"MessageAttribute" . "."  . ($attributesendMessageRequestIndex + 1) . "." . "Value" . "." . "BinaryValue"} =  $value->getBinaryValue();
+    }
   }
 
   return $parameters;
