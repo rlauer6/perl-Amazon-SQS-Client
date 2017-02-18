@@ -18,92 +18,89 @@
 #  Generated: Thu Apr 09 01:13:11 PDT 2009 
 # 
 
-
 package Amazon::SQS::Model::ChangeMessageVisibilityResponse;
 
 use base qw (Amazon::SQS::Model);
 
-    
-
-    #
-    # Amazon::SQS::Model::ChangeMessageVisibilityResponse
-    # 
-    # Properties:
-    #
-    # 
-    # ResponseMetadata: Amazon::SQS::Model::ResponseMetadata
-    #
-    # 
-    # 
-    sub new {
-        my ($class, $data) = @_;
-        my $self = {};
-        $self->{_fields} = {
-            
-            ResponseMetadata => {FieldValue => undef, FieldType => "Amazon::SQS::Model::ResponseMetadata"},
-        };
-
-        bless ($self, $class);
-        if (defined $data) {
-           $self->_fromHashRef($data); 
-        }
+#
+# Amazon::SQS::Model::ChangeMessageVisibilityResponse
+# 
+# Properties:
+#
+# 
+# ResponseMetadata: Amazon::SQS::Model::ResponseMetadata
+#
+# 
+# 
+sub new {
+  my ($class, $data) = @_;
+  my $self = {};
+  $self->{_fields} = {
+		      ResponseMetadata => {FieldValue => undef, FieldType => "Amazon::SQS::Model::ResponseMetadata"},
+		     };
+  
+  bless ($self, $class);
+  if (defined $data) {
+    $self->_fromHashRef($data); 
+  }
         
-        return $self;
-    }
+  return $self;
+}
 
        
-     #
-     # Construct Amazon::SQS::Model::ChangeMessageVisibilityResponse from XML string
-     # 
-    sub fromXML {
-        my ($self, $xml) = @_;
-        eval "use XML::Simple";
-        my $tree = XML::Simple::XMLin ($xml);
+#
+# Construct Amazon::SQS::Model::ChangeMessageVisibilityResponse from XML string
+# 
+sub fromXML {
+  my ($self, $xml) = @_;
+  eval "use XML::Simple";
+  my $tree = XML::Simple::XMLin ($xml);
          
-        # TODO: check valid XML (is this a response XML?)
+  # TODO: check valid XML (is this a response XML?)
         
-        return new Amazon::SQS::Model::ChangeMessageVisibilityResponse($tree);
+  return new Amazon::SQS::Model::ChangeMessageVisibilityResponse($tree);
           
-    }
+}
     
-    sub getResponseMetadata {
-        return shift->{_fields}->{ResponseMetadata}->{FieldValue};
-    }
+sub getResponseMetadata {
+  return shift->{_fields}->{ResponseMetadata}->{FieldValue};
+}
 
 
-    sub setResponseMetadata {
-        my ($self, $value) = @_;
-        $self->{_fields}->{ResponseMetadata}->{FieldValue} = $value;
-    }
+sub setResponseMetadata {
+  my ($self, $value) = @_;
+  $self->{_fields}->{ResponseMetadata}->{FieldValue} = $value;
+}
 
 
-    sub withResponseMetadata {
-        my ($self, $value) = @_;
-        $self->setResponseMetadata($value);
-        return $self;
-    }
+sub withResponseMetadata {
+  my ($self, $value) = @_;
+  $self->setResponseMetadata($value);
+  return $self;
+}
 
 
-    sub isSetResponseMetadata {
-        return defined (shift->{_fields}->{ResponseMetadata}->{FieldValue});
+sub isSetResponseMetadata {
+  return defined (shift->{_fields}->{ResponseMetadata}->{FieldValue});
 
-    }
+}
 
 
 
-    #
-    # XML Representation for this object
-    # 
-    # Returns string XML for this object
-    #
-    sub toXML {
-        my $self = shift;
-        my $xml = "";
-        $xml .= "<ChangeMessageVisibilityResponse xmlns=\"http://queue.amazonaws.com/doc/2009-02-01/\">";
-        $xml .= $self->_toXMLFragment();
-        $xml .= "</ChangeMessageVisibilityResponse>";
-        return $xml;
-    }
+#
+# XML Representation for this object
+# 
+# Returns string XML for this object
+#
+sub toXML {
+  my $self = shift;
+  my $xml = "";
+  $xml .= "<ChangeMessageVisibilityResponse xmlns=\"http://queue.amazonaws.com/doc/2009-02-01/\">";
+  $xml .= $self->_toXMLFragment();
+  $xml .= "</ChangeMessageVisibilityResponse>";
+  return $xml;
+	
+}
 
 
 1;
