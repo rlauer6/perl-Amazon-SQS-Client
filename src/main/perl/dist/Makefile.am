@@ -8,16 +8,16 @@ perldist_lib_Modeldir = $(perldistdir)/lib/Amazon/SQS/Model
 perldist_bindir = $(perldistdir)/bin
 perldist_tdir = $(perldistdir)/t
 
-perldist_DATA = \
+dist_perldist_DATA = \
     Makefile.PL \
     MANIFEST
 
-perldist_t_DATA = \
+dist_perldist_t_DATA = \
     ../t/test-01.t
 
 perldist_bin_DATA = \
     ../bin/QueueDaemon.pl \
-    ../bin/aws-sqsd
+    ../../bash/bin/aws-sqsd
 
 perldist_lib_SQS_DATA = \
     ../lib/Amazon/SQS/Exception.pm \
