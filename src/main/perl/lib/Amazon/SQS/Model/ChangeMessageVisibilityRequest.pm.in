@@ -146,7 +146,6 @@ use base qw (Amazon::SQS::Model);
         }
     }
 
-
     sub withAttribute {
         my ($self, $attributeArgs) = @_;
         foreach my $attribute (@$attributeArgs) {
@@ -155,13 +154,8 @@ use base qw (Amazon::SQS::Model);
         return $self;
     }   
 
-
     sub isSetAttribute {
         return  scalar (@{shift->{_fields}->{Attribute}->{FieldValue}}) > 0;
     }
-
-
-
-
 
 1;
