@@ -1,3 +1,61 @@
+Fri Nov  1 15:09:46 2024  Rob Lauer  <rlauer6@comcast.net>
+
+	[2.0.1]:
+	* configure.ac
+	- use VERSION
+	- update requirements
+	(do_subst_command): @PACKAGE_VERSION@
+	* src/main/perl/dist: removed
+	* src/main/perl/Makefile.am: likewise
+	* TESTING.md: removed
+	* Makefile.am: add cpan
+	* README.md: updates
+	* src/main/perl/bin/Makefile.am
+	- move examples
+	- chmod +x
+	* src/main/perl/bin/QueueDaemon.pl.in
+	- major update and refactor
+	* src/main/perl/lib/Amazon/SQS/Client.pm.in: likewise
+	* src/main/perl/lib/Amazon/SQS/Config.pm.in: likewise
+	* src/main/perl/lib/Makefile.am
+	- add Amazon/SQS/QueueHandler.pm.in to build
+	- add test target
+	* src/main/perl/bin/AddPermissionSample.pl.in -> examples/AddPermissionSample.pl: moved
+	* src/main/perl/bin/ChangeMessageVisibilitySample.pl.in -> examples/ChangeMessageVisibilitySample.pl: moved
+	* src/main/perl/bin/CreateQueueSample.pl.in -> examples/CreateQueueSample.pl: moved
+	* src/main/perl/bin/DeleteMessageSample.pl.in -> examples/DeleteMessageSample.pl: moved
+	* src/main/perl/bin/DeleteQueueSample.pl.in -> examples/DeleteQueueSample.pl: moved
+	* src/main/perl/bin/GetQueueAttributesSample.pl.in -> examples/GetQueueAttributesSample.pl: moved
+	* src/main/perl/bin/ListQueuesSample.pl.in -> examples/ListQueuesSample.pl: moved
+	* src/main/perl/bin/ReceiveMessageSample.pl.in -> examples/ReceiveMessageSample.pl: moved
+	* src/main/perl/bin/RemovePermissionSample.pl.in -> examples/RemovePermissionSample.pl: moved
+	* src/main/perl/bin/SendMessageSample.pl.in -> examples/SendMessageSample.pl: moved
+	* src/main/perl/bin/SetQueueAttributesSample.pl.in -> examples/SetQueueAttributesSample.pl: moved
+	* aclocal.m4: removed
+	* autotools/install-sh: removed
+	* autotools/missing: removed
+	* Makefile.in: removed
+	* configure: removed
+	* resources/Makefile.in: removed
+	* src/Makefile.in: removed
+	* src/main/Makefile.in: removed
+	* src/main/bash/Makefile.in: removed
+	* src/main/bash/bin/Makefile.in: removed
+	* src/main/perl/Makefile.in: removed
+	* src/main/perl/bin/Makefile.in: removed
+	* src/main/perl/dist/Makefile.in: removed
+	* src/main/perl/lib/Makefile.in: removed
+	* .gitignore: new
+	* VERSION: new
+	* bootstrap: new
+	* src/main/perl/lib/Amazon/SQS/QueueHandler.pm.in: new
+	* src/main/perl/lib/t/00-config.t: new
+	* src/main/perl/lib/t/00-handler.t: new
+	* src/main/perl/lib/t/00-sqs-client.t: new
+	* src/main/perl/lib/t/01-config.t: new
+	* src/main/perl/lib/t/01-handler.t: new
+	* src/main/perl/lib/t/01-sqs-client.t: new
+
 2017-02-18  Rob Lauer <rlauer6@comcast.net>
 	[changes to support API version 2012-11-05]:
 	* src/main/perl/lib/Amazon/SQS/Model/DeleteMessageBatchRequest.pm.in: new

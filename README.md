@@ -1,6 +1,6 @@
-# OVERVIEW
+# README
 
-This is the README.md file for the `perl-Amazon-SQS-Client` project.
+This is the README file for the `perl-Amazon-SQS-Client` project.
 
 This project contains Perl modules and example Perl scripts that
 interface with Amazon Web Service's Simple Queue Service.  The Amazon
@@ -9,38 +9,92 @@ applications.  It implements a simple message queueing system which
 allows you to send and receive messages that your programs might use
 for interprocess communications.
 
-See `INSTALL` for information on how to build and install this
+See [`INSTALL`](INSTALL.md) for information on how to build and install this
 project.  If you are attempting to create a CPAN distribution or just
-want to install things the `Perlish` way, build the project in the
-recommended way and install the project using the Perl standard
-incantations.
+want to install things the `Perlish` way, first build the project in the
+recommended way.  Instructions on building a CPAN Distribution can be
+found [here](#building-a-cpan-distribution).
+
+# Requirements
+
+* `make`
+* `automake`
+* `autoconf`
+
+## Perl Module Requirements
+
+* AWS::Signature4
+* Carp
+* CGI::Simple
+* Class::Accessor::Fast
+* Config::IniFiles
+* Digest::SHA 6.02
+* English
+* JSON
+* List::Util
+* Log::Log4perl
+* LWP::UserAgent
+* Readonly
+* Scalar::Util
+* Test::More
+* Time::HiRes
+* URI
+* URI::Escape
+* XML::Simple
+
+...and possibly others.
+
+# Building the Software
 
 ```
-$ ./configure --with-sysconfdir=/etc/
+./bootstrap
+./configure --with-sysconfdir=/etc
+make
+sudo make install
+```
+
+# Building a CPAN Distribution
+
+In order to build the CPAN distribution you need to install these
+dependencies:
+
+* [`make-cpan-dist`](https://github.com/rlauer6/make-cpan-dist.git)
+* [`Module::ScanDeps::Static`](https://metacpan.org/pod/Module::ScanDeps::Static)
+
+First build the project in the normal manner.
+
+```
+./bootstrap
+./configure
+make
+```
+
+Now you can build the distribution:
+
+```
+cd cpan
+make cpan
+```
+## Quick Install
+
+```
+$ ./configure --prefix=/usr --sysconfdir=/etc
 $ make
 $ sudo make install
 ```
-...then
+
+## RPM Building
+
+Assuming you know how to build RPMs and have the requisite rpm build
+tools installed...
 
 ```
-$ cd /usr/share/perl-Amazon-SQS-Client/perl-dist
-$ sudo perl Makefile.PL
-$ make test
-$ sudo make install
+$ ./configure --prefix=/usr
+$ make && make dist
+$ rpmbuild -tb perl-Amazon-SQS-Client-2.0.1.tar.gz
 ```
 
-If you are interested in creating an RPM, see the information below on
-**RPM BUILDING**.
-
-See `TESTING` for information on how to test the build.
-
-See `BUGS` for information on how to report problems with this
-project.
-
-See `/usr/share/amazon-web-services/sqs/ReadMe.html` for the
-information about how to use these modules.
-
-# HISTORY
+# History
 
 This is a fork of the `Amazon::SQS::Client` package distributed by
 Amazon a few years ago (2009).  Perl is no longer a first-class
@@ -67,116 +121,59 @@ my $queues = $queues_result->getQueueUrl();
 As they say, there's no free lunch, so if you don't mind the verbosity
 and light-weight is your goal...keep reading.
 
-# HACKS TO ORIGINAL PROJECT
+# Differences From the Original Project
 
 1. This project can create an RPM - I've include a working `.spec`
 file.
 2. An example queue daemon - this project includes a so-called
-"queue worker" in the form of an example daemon for handling SQS
+"queue daemon" in the form of a Perl script for handling SQS
 messages (`QueueDaemon.pl`).
 3. Long polling - support for API version 2012-11-05 `WaitTimeSeconds`
 parameter to the `ReceiveMessage` API call.
 4. Support for temporary security tokens.
-5. Support for Signature Version 4 (via AWS::Signature4)
+5. Support for Signature Version 4 (via `AWS::Signature4`)
 
-# TODO
-
-Add support of batch operations.
-
-# MORE DETAILS
-
-## REQUIRED PERL MODULES
-
-* AppConfig
-* AWS::Signature4
-* Crypt::SSLeay
-* Data::Dumper
-* Digest::SHA
-* LWP::Protocol::https
-* LWP::UserAgent
-* Time::HiRes
-* Proc::PID::File
-* Proc::Daemon
-* Scalar::Util
-* URI::Escape
-* XML::Simple
-
-You can try this, but your RPM repos might not have all of those
-symbols.  If you're stuck, use `cpanm` (`App::cpanminus`).
-
-```
-$ for a in $(cat required-modules); do sudo yum install -y 'perl'($a')'; done
-```
-
-## QUICK INSTALL
-
-```
-$ ./configure --prefix=/usr --sysconfdir=/etc
-$ make
-$ sudo make install
-```
-
-## RPM BUILDING
-
-Assuming you know how to build RPMs and have the requisite rpm build
-tools installed...
-
-```
-$ ./configure --prefix=/usr
-$ make && make dist
-$ rpmbuild -tb perl-Amazon-SQS-Client-1.1.1.tar.gz
-```
-
-## EXAMPLES
+## Examples
 
 The original Amazon SQS library was distributed as a .zip file with
-example scripts (formerly) found in the
-`amazon-queue/src/Amazon/SQS/Samples` directory.  The example files
-were skeletons that you were expected to flesh out by adding your AWS
-credentials and instantiate the correct parameters to send to the
-module being tested.
+example scripts.  The example files were skeletons that you were
+expected to flesh out by adding your AWS credentials and instantiate
+the correct parameters to send to the module being tested.
 
 The examples in this project have been modified from their original
 version so that they will read a configuration file (.ini style) named
-`aws-sqs.ini` located in the `/usr/share/amazon-web-services/sqs'
-directory.
+`aws-sqs.ini`.
 
-After installation of the package read the `perldocs` which describe the
-format of this file and what you are expected to do to configure the
-examples.
+After installation of the package read the `perldocs` which describe
+the format of the configuration file and what you are expected to do
+to configure the examples.
 
 ```
  $ perldoc Amazon::SQS::Config
 ```
 
-# WHERE TO GO FROM HERE
+# Where to Go From Her
 
-Try any of the examples in the
-`/usr/share/amazon-web-services/sqs/examples` directory.
+Try any of the examples in the [examples](examples) directory.
 
 # `QueueDaemon.pl`
 
-This is a reference implementation of what you might call a **queue
-worker**.  The idea is for you to examine the code and modify it
-according to your needs.  It does not actually do anything useful
-other than read messages from queues.  You're supposed to write a
-handler that interprets the message and does whatever voodoo you do in
-your application.
+This is a fairly robust implementation of a daemon that will read and
+process messages from an SQS queue. You create a class that contains a
+`handler()` method that will receive messages from the daemon.  You
+can learn more about the `QueueDaemon.pl` script and how to write your
+own handlers by reading the docs.
 
-# AUTHOR
+`perldoc QueueHandler.pl`
+`perldoc Amazon::SQS::Config`
+`perldoc Amazon::SQS::QueueHandler`
+
+# Author
 
 The original Perl modules were (apparently) written/generated by
 someone whose email address is:
 
 `<Elena@AWS>`
 
-The additional hack-patching can be attributed to Rob Lauer
-<rlauer6@comcast.net>.
-
-You'll find some extra goodies that may or may not be of any value:
-
-*  `Amazon::SQS::Config` - configuration file access
-*  `QueDaemon.pl` - a reference implementation of a daemon for handling simple messages placed on SQS queues
-*  `aws-sqsd` - System V init script starting a queue handling daemon
-
-Enjoy!
+The additional modules and scripts can be attributed to Rob Lauer
+<bigfoot@cpan.org>.

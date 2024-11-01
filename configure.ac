@@ -1,4 +1,12 @@
-AC_INIT([perl-Amazon-SQS-Client], [1.1.1], [rlauer6@comcast.net], [perl-Amazon-SQS-Client])
+AC_INIT([perl-Amazon-SQS-Client],
+        m4_esyscmd_s([
+if test -z "$VERSION"; then \
+  VERSION=$(test -e VERSION && cat VERSION); \
+  VERSION=${VERSION:-0.0.0}; \
+fi; \
+echo $VERSION
+]),
+        m4_esyscmd_s([if test -z "$EMAIL"; then EMAIL=rclauer@gmail.com; fi; echo $EMAIL]),[perl-Amazon-SQS-Client])
 
 __poor_mans_expand_file_name () {
     _tmp_name=$1
@@ -29,6 +37,7 @@ __poor_mans_expand_file_name () {
 do_subst_command='do_subst = sed \
   -e '"'"'s,[@]PACKAGE[@],$(PACKAGE),g'"'"' \
   -e '"'"'s,[@]VERSION[@],$(VERSION),g'"'"' \
+  -e '"'"'s,[@]PACKAGE_VERSION[@],$(PACKAGE_VERSION),g'"'"' \
   -e '"'"'s,[@]PATH_SEPARATOR[@],$(PATH_SEPARATOR),g'"'"' \
   -e '"'"'s~[@]configure_input[@]~Generated from $@.in; do not edit by hand.~g'"'"' \
   -e "s,[@]BUILD_DATE[@],$$(date '"'"'+%Y-%m-%d %H:%M:%S'"'"'),g" \
@@ -92,6 +101,20 @@ fi
 x=$(perl -e 'use Config qw/config_vars/; config_vars('installsitelib');'); eval $x;
 perl5libdir=$installsitelib
 
+AC_PATH_PROG([MAKE_CPAN_DIST],
+	[make-cpan-dist.pl])
+
+if test -z "$MAKE_CPAN_DIST" ; then 
+  AC_MSG_WARN([make-cpan-dist.pl not found? (you won't be able to create a CPAN distribution - https://github.com/rlauer6/make-cpan-dist.git)])
+fi
+
+AC_PATH_PROG([SCANDEPS],
+	[scandeps-static.pl])
+
+if test -z "$SCANDEPS" ; then 
+  AC_MSG_WARN([scandeps-static.pl not found? (https://metacpan.org/pod/Module::ScanDeps::Static)])
+fi
+
 AC_ARG_WITH(
         [perl5libdir],[  --with-perl5libdir (defaults to [installsitelib])],
         [
@@ -107,8 +130,7 @@ AC_ARG_WITH(
 
 AC_SUBST([perl5libdir])
 
-dnl something just to make autoconf include the autotools/ads_ stuff in the distribution
-ads_PERL_MODULE([AppConfig])
+ads_PERL_MODULE([Config::IniFiles])
 ads_PERL_MODULE([AWS::Signature4])
 ads_PERL_MODULE([Carp])
 ads_PERL_MODULE([Cwd])
@@ -117,8 +139,12 @@ ads_PERL_MODULE([Digest::SHA])
 ads_PERL_MODULE([File::Basename])
 ads_PERL_MODULE([Getopt::Long])
 ads_PERL_MODULE([LWP::UserAgent])
+ads_PERL_MODULE([Log::Log4perl])
+ads_PERL_MODULE([List::Util])
+ads_PERL_MODULE([JSON])
 ads_PERL_MODULE([Proc::Daemon])
 ads_PERL_MODULE([Proc::PID::File])
+ads_PERL_MODULE([Readonly])
 ads_PERL_MODULE([Scalar::Util])
 ads_PERL_MODULE([Time::HiRes])
 ads_PERL_MODULE([URI])
@@ -137,7 +163,7 @@ AC_CONFIG_FILES([
     src/main/perl/Makefile
     src/main/perl/bin/Makefile
     src/main/perl/lib/Makefile
-    src/main/perl/dist/Makefile
+    cpan/Makefile
     ${PACKAGE_NAME}.spec
 ])
 
@@ -155,3 +181,4 @@ printf "                   perl5libdir: %s\n" "`__poor_mans_expand_file_name per
 printf "\n"
 printf "                          perl: %s\n" "`__poor_mans_expand_file_name PERL`"
 printf "\n"
+printf "               Package Version: %s\n"   "${PACKAGE_VERSION}"

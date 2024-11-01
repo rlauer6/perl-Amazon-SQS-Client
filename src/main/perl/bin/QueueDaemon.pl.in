@@ -1,40 +1,479 @@
 #!@perlrun@
 
-# $Id: QueueDaemon.pl.in,v 1.1 2012/04/23 21:34:56 rlauer Exp $
-
 use strict;
 use warnings;
+
+########################################################################
+package main;
+########################################################################
+
+use Cwd;
 use Data::Dumper;
-
-use lib '@perl5libdir@';
-
-use Getopt::Long;
-
+use English qw(-no_match_vars);
+use Getopt::Long qw(:config no_ignore_case);
+use List::Util qw(max min sum);
+use Log::Log4perl qw(:easy);
+use Log::Log4perl::Level;
+use Pod::Usage;
 use Proc::Daemon;
 use Proc::PID::File;
+use Module::Load qw(autoload);
+use Module::Loaded qw(mark_as_unloaded is_loaded);
 
+use Amazon::Credentials;
 use Amazon::SQS::Config;
-use Amazon::SQS::Client; 
+use Amazon::SQS::Client;
 use Amazon::SQS::Model::ReceiveMessageRequest;
 use Amazon::SQS::Model::DeleteMessageRequest;
 use Amazon::SQS::Exception;
+
+use Readonly;
+
+Readonly::Scalar our $TRUE  => 1;
+Readonly::Scalar our $FALSE => 0;
+
+Readonly::Scalar our $DEFAULT_SLEEP_TIME => 5;
+Readonly::Scalar our $MAX_SLEEP_TIME     => 60;
+
+our $KEEP_GOING = $TRUE;
+our $RELOAD     = $FALSE;
+
+########################################################################
+sub get_options {
+########################################################################
+  my @option_specs = qw(
+    config|c=s
+    create-queue|C
+    daemonize|d!
+    delete-when|D=s
+    exit-when|E=s
+    endpoint_url|e=s
+    help|h
+    logfile|L=s
+    loglevel|l=s
+    max-children|m=i
+    max-sleep-time=i
+    max-messages=i
+    queue|q=s
+    queue-interval|I=i
+    handler|H=s
+    message-type|M=s
+  );
+
+  my %options = (
+    daemonize     => $TRUE,
+    'exit-when'   => 'never',
+    'delete-when' => 'true',
+    handler       => 'Amazon::SQS::QueueHandler',
+  );
+
+  my $retval = GetOptions( \%options, @option_specs );
+
+  if ( !$retval || $options{help} ) {
+    pod2usage(1);
+  }
+
+  return %options;
+}
+
+########################################################################
+sub main {
+########################################################################
+
+  my %options = get_options();
+
+  die sprintf "no such file %s\n", $options{config}
+    if $options{config} && !-e $options{config};
+
+  my $config = load_config( \%options );
+
+  my $logger = init_logger( \%options );
+
+  $logger->trace( Dumper( [ config => $config, options => \%options ] ) );
+
+  # instantiate Amazon::SQS::QueueHandler class
+  my $handler = load_handler(
+    config  => $config,
+    options => \%options,
+    logger  => $logger
+  );
+
+  my $url = $handler->get_url;
+
+  die "no queue url set\n"
+    if !$url;
+
+  if ( !$handler || $EVAL_ERROR ) {
+    die Dumper $EVAL_ERROR
+      if ref $EVAL_ERROR;
+
+    die "could not instantiate handler\n$EVAL_ERROR";
+  }
+
+  # set up signal handlers
+  $logger->trace('setting up signal handlers');
+
+  setup_signal_handlers( \%options, \$handler );
+
+  my $service = $handler->get_service;
+
+  my @dont_close_fh;
+
+  if ( !$config || !$config->get_log_stderr ) {
+    push @dont_close_fh, 'STDERR';
+  }
+
+  if ( !$config || !$config->get_log_stdout ) {
+    push @dont_close_fh, 'STDOUT';
+  }
+
+  if ( $options{daemonize} ) {
+    my %daemon_config = (
+      work_dir => cwd,
+      $config && $config->get_log_stdout ? ( child_STDOUT => $config->get_log_stdout ) : (),
+      $config && $config->get_log_stderr ? ( child_STDERR => $config->get_log_stderr ) : (),
+      @dont_close_fh ? ( dont_close_fh => \@dont_close_fh ) : (),
+    );
+
+    Proc::Daemon->new(%daemon_config)->Init();
+  }
+
+  # If already running, then exit
+  if ( Proc::PID::File->running( dir => cwd ) ) {
+    $logger->error('already running...');
+    exit 0;
+  }
+
+  my $sleep = $options{'queue-interval'};
+
+  while ($KEEP_GOING) {
+
+    my $request = Amazon::SQS::Model::ReceiveMessageRequest->new(
+      { QueueUrl            => $handler->get_url,
+        MaxNumberOfMessages => max( 1, $handler->get_max_messages ),  # max of 1 currently
+      }
+    );
+
+    if ($RELOAD) {
+      $sleep  = $options{'queue-interval'};
+      $RELOAD = $FALSE;
+    }
+
+    $logger->info( sprintf 'reading queue: %s', $handler->get_url );
+
+    my ($message) = get_next_message( $service, $request );
+
+    if ( !$message || !$message->isSetMessageId() ) {
+      $logger->info( sprintf 'no messages - sleeping for  %d seconds', $sleep );
+
+      sleep $sleep;
+
+      $sleep = min( $options{'max-sleep-time'}, sleep_time( $sleep, \%options ) );
+
+      next;
+    }
+
+    # reset sleep interval
+    $sleep = $options{'queue-interval'};
+
+    $logger->info( sprintf 'processing message...%s', $message->getMessageId() );
+
+    my $retval = eval {
+      $handler->decode_message($message);
+
+      return $handler->handler( $handler->get_message );
+    };
+
+    my $err = $EVAL_ERROR;
+
+    if ( !$retval || $err ) {
+      $logger->debug('message error...');
+
+      if ($err) {
+        $logger->error($err);
+
+        if ( $options{'delete-when'} =~ /(?:error|always)/xsm ) {
+          $logger->info('deleting message');
+          $handler->delete_message();
+        }
+
+        if ( $options{'exit-when'} =~ /(?:error|always)/xsm ) {
+          $KEEP_GOING = $FALSE;
+        }
+      }
+      else {
+        if ( $options{'delete-when'} =~ /(?:false|always)/xsm ) {
+          $logger->info('deleting message');
+          $handler->delete_message();
+        }
+
+        if ( $options{'exit-when'} =~ /(?:always|false)/xsm ) {
+          $KEEP_GOING = $FALSE;
+        }
+      }
+    }
+    else {
+      $logger->info('message handled successfully');
+
+      if ( $options{'delete-when'} =~ /(?:always|true)/xsm ) {
+        $logger->info('deleting message');
+        $handler->delete_message();
+      }
+    }
+
+    if ( $options{'exit-when'} eq 'always' ) {
+      $KEEP_GOING = $FALSE;
+    }
+  }
+
+  return 0;
+}
+
+########################################################################
+sub get_next_message {
+########################################################################
+  my ( $service, $request ) = @_;
+
+  my $response = $service->receiveMessage($request);
+
+  return
+    if !$response || !$response->isSetReceiveMessageResult();
+
+  my $receiveMessageResult = $response->getReceiveMessageResult();
+
+  my $messageList = $receiveMessageResult->getMessage();
+
+  return @{$messageList};
+}
+
+########################################################################
+sub init_logger {
+########################################################################
+  my ($options) = @_;
+
+  my ( $logfile, $loglevel ) = @{$options}{qw(logfile loglevel)};
+
+  $loglevel //= 'info';
+
+  $loglevel = {
+    error => $ERROR,
+    debug => $DEBUG,
+    trace => $TRACE,
+    info  => $INFO,
+    warn  => $WARN,
+  }->{ lc $loglevel };
+
+  $loglevel //= $INFO;
+
+  if ( Log::Log4perl->initialized ) {
+    my $logger = Log::Log4perl->get_logger;
+    $logger->level($loglevel);
+    return $logger;
+  }
+
+  Log::Log4perl->easy_init(
+    { level => $loglevel,
+      $logfile ? ( file => $logfile ) : ()
+    }
+  );
+
+  return Log::Log4perl->get_logger;
+}
+
+########################################################################
+sub setup_signal_handlers {
+########################################################################
+  my ( $options, $handler ) = @_;
+
+  $SIG{HUP} = sub {
+    print {*STDERR} "Caught SIGHUP:  re-reading config file.\n";
+
+    $KEEP_GOING = $TRUE;
+
+    mark_as_unloaded( $options->{handler} );
+
+    ${$handler} = load_handler(
+      options     => $options,
+      logger      => ${$handler}->get_logger,
+      credentials => ${$handler}->get_credentials,
+      config      => load_config($options),
+    );
+
+    init_logger($options);  # just reset loglevel (potentially)
+
+    $RELOAD = $TRUE;
+  };
+
+  $SIG{INT} = sub {
+    print {*STDERR} ("Caught SIGINT:  exiting gracefully\n");
+    $KEEP_GOING = $FALSE;
+  };
+
+  $SIG{QUIT} = sub {
+    print {*STDERR} ("Caught SIGQUIT:  exiting gracefully\n");
+    $KEEP_GOING = $FALSE;
+  };
+
+  $SIG{TERM} = sub {
+    print {*STDERR} ("Caught SIGTERM:  exiting gracefully\n");
+    $KEEP_GOING = $FALSE;
+  };
+
+  return;
+}
+
+########################################################################
+sub load_config {
+########################################################################
+  my ($options) = @_;
+
+  return
+    if !$options->{config};
+
+  my $config = Amazon::SQS::Config->new( file => $options->{config} );
+
+  $options->{loglevel} = $config->get_aws_log_level // $options->{loglevel};
+  $options->{logfile}  = $config->get_aws_log_file  // $options->{logfile};
+
+  $options->{'delete-when'} = $config->get_error_delete // $options->{'delete-when'};
+
+  $options->{'exit-when'} = $config->get_error_exit // $options->{'exit-when'};
+
+  $options->{handler} = $config->get_handler_class // $options->{handler};
+
+  $options->{'max-sleep-time'} //= $config->get_queue_max_wait // $MAX_SLEEP_TIME;
+
+  $options->{'max-messages'} //= $config->get_queue_max_messages // 1;
+
+  $options->{queue} //= $config->get_queue_name;
+
+  $options->{'queue-url'} //= $config->get_queue_url;
+
+  $options->{'queue-interval'} //= $config->get_queue_interval // $DEFAULT_SLEEP_TIME;
+
+  $options->{'create-queue'} //= $config->get_queue_create_queue // $FALSE;
+
+  return $config;
+}
+
+########################################################################
+sub load_handler {
+########################################################################
+  my (%args) = @_;
+
+  my ( $config, $options, $logger, $credentials ) = @args{qw(config options logger credentials)};
+
+  if ( is_loaded( $options->{handler} ) ) {
+    mark_as_unloaded( $options->{handler} );
+  }
+
+  autoload $options->{handler};
+
+  my $handler = $options->{handler}->new(
+    config       => $config,
+    logger       => $logger,
+    endpoint_url => $options->{endpoint_url},
+    name         => $options->{queue},
+    url          => $options->{'queue-url'},
+    message_type => $options->{'message-type'},
+    create_queue => $options->{'create-queue'},
+    credentials  => $credentials,
+  );
+
+  die "not an Amazon::SQS::QueueHandler\n"
+    if !$handler->isa('Amazon::SQS::QueueHandler');
+
+  return $handler;
+}
+
+########################################################################
+sub sleep_time {
+########################################################################
+  my ( $sleep, $options ) = @_;
+
+  return $sleep + $options->{'queue-interval'};
+}
+
+exit main();
+
+1;
+
+__END__
 
 =pod
 
 =head1 NAME 
 
- $0
+QueueDaemon.pl - wrapper for queue handler daemons
 
 =head1 SYNOPSIS
 
- QueueDaemon.pl --config=amazon.ini
+ QueueDaemon.pl options
+
+Read and process SQS messages.
 
 =head1 DESCRIPTION
 
 Implements a daemon that reads from Amazon's Simple Queue Service
 (SQS).
 
+=head1 OPTIONS
+
+ -h, --help           help
+ -c, --config         config file name
+ -C, --create-queue   create the queue if it does not exist
+ -d, --daemonize      daemonize the script (default)
+     --no-daemonize 
+ -D, --delete-when    never, always, error
+ -E, --exit-when      never, always, error, false
+ -e, --endpoint-url   default: https://sqs.amazonaws.com
+ -L, --logfile        name of logfile
+ -l, --loglevel       log level (trace, debug, info, warn, error)
+ -H, --handler        name of the handler class, default: Amazon::SQS::QueueHandler
+ -m, --max-children   not implemented
+ -s, --max-sleep-time default: 5 seconds
+     --max-messages   fixed at 1 currently
+ -M, --message-type   mime type of messages (text/plain, application/json, 
+                      application/x-www-form-encoded), default: text/plain
+ -q, --queue          queue name (not url)
+     --queue-interval amount of time to sleep
+
+
+=head2 LICENSE
+
+(c) Copyright 2024 TBC Development Group, LLC. All rights reserved.
+This is free software and may be used or distributed under the same terms as Perl itself.
+
 =head1 NOTES
+
+=over 5 
+
+=item 1. If the queue does not exist it will be created if you use the --create-queue option.
+
+=item 2. If no logfile is given, log output will be sent to STDERR
+
+=item 3. See L<Amazon::SQS::Config> regarding the available options in a config file.
+
+=item 4. The default is to daemonize the script. Use --no-daemonize to run in a terminal.
+
+=item 5. If you do not provide a handler on the command line or in
+your .ini file the default handler will be used. The default hanlder will dump the
+message to the log and delete the message.
+
+=item 6. By default messages will only be deleted from the queue if your
+handler returns a true value. If you want to delete messages which cannot be
+decoded or when you handler returns a non-true value, set the
+--delete-when or set 'delete' option in the [error] section of your .ini file.
+
+=item 7. To exit the daemon when your handler returns a non-true value
+set the --exit-when option to 'false' or in the [error] section of your .ini
+file, set 'exit = false'.
+
+=item 8. To exit the daemon if your handler throws an exception, 
+set the --exit-when option to 'error' or in the [error] section of your .ini
+file, set 'exit = error'.
+
+=back
 
 On a RedHat or CentOS system, use C<chkconfig> to add the example daemon.
 
@@ -68,151 +507,12 @@ See L</Amazon::SQS::Config>
 
 =cut
 
+=head1 AUTHOR
 
-# +--------------------------+
-# | MAIN PROGRAM STARTS HERE |
-# +--------------------------+
-
-my $CONFIG_FILE;
-
-GetOptions( "config=s", \$CONFIG_FILE );
-
-unless ( $CONFIG_FILE && -s $CONFIG_FILE ) {
-  print "usage: $0 --config=config-file\n";
-  exit 1;
-}
-
-my $config = new Amazon::SQS::Config( $CONFIG_FILE );
-
-# set up signal handlers
-my $keep_going = 1;
-
-$SIG{HUP}  = sub { 
-  print STDERR "Caught SIGHUP:  re-reading config file.\n"; 
-  
-  $keep_going = 1;
-   
-  $config->file( $CONFIG_FILE );
-};
-
-$SIG{INT}  = sub { print STDERR ("Caught SIGINT:  exiting gracefully\n");
-		   $keep_going = 0; 
-		 };
-
-$SIG{QUIT} = sub { print STDERR ("Caught SIGQUIT:  exiting gracefully\n"); 
-		   $keep_going = 0; 
-		 };
-
-$SIG{TERM} = sub { print STDERR ("Caught SIGTERM:  exiting gracefully\n"); 
-		   $keep_going = 0;
-		 };
-
-my $AWS_ACCESS_KEY_ID     = $config->aws_access_key_id;
-my $AWS_SECRET_ACCESS_KEY = $config->aws_secret_access_key;
-
-my $service = Amazon::SQS::Client->new( $AWS_ACCESS_KEY_ID, $AWS_SECRET_ACCESS_KEY );
-my $url = $config->aws_queue_url;
-
-my $request = new Amazon::SQS::Model::ReceiveMessageRequest( 
-							    { 
-							     QueueUrl => $url,
-							     MaxNumberOfMessages => 1
-							    }
-							   );
-# Daemonize
-Proc::Daemon::Init(
-		   {
-		    child_STDOUT => $config->log_stdout,
-		    child_STDERR => $config->log_stderr
-		   }
-		  );
-
-# If already running, then exit
-  if ( Proc::PID::File->running() ) {
-    exit(0);
-  }
-
-my $max_sleep_period = $config->queue_max_wait;
-my $sleep = $config->queue_interval || 5;
-
-# Enter loop to do work
-while ( $keep_going ) {
-  printf "Reading queue\n";
-  
-  my $response = $service->receiveMessage($request);
-  
-  if ( $response->isSetReceiveMessageResult() ) {
-    my $receiveMessageResult = $response->getReceiveMessageResult();
-    my $messageList = $receiveMessageResult->getMessage();
-    my $message = shift @$messageList;
-    
-    if ( $message && $message->isSetMessageId() ) {
-      printf("Processing message...%s\n", $message->getMessageId());
-      printf("Message...%s\n", $message->getBody());
-
-      if ( $message->isSetReceiptHandle() ) {
-	my $handle = $message->getReceiptHandle();
-
-	printf("Handle : %s\n", $handle);
-
-	eval {
-	  printf("Deleting message\n");
-	  
-	  $service->deleteMessage( 
-				  new Amazon::SQS::Model::DeleteMessageRequest(
-									       { QueueUrl => $url,
-										 ReceiptHandle => $handle
-									       }
-									      )
-				 );
-	};
-	
-	if ( $@ ) {
-	  my $ex = $@;
-
-	  if ( ref $ex eq "Amazon::SQS::Exception") {
-	    print("Caught Exception: " . $ex->getMessage() . "\n");
-	    print("Response Status Code: " . $ex->getStatusCode() . "\n");
-	    print("Error Code: " . $ex->getErrorCode() . "\n");
-	    print("Error Type: " . $ex->getErrorType() . "\n");
-	    print("Request ID: " . $ex->getRequestId() . "\n");
-	    print("XML: " . $ex->getXML() . "\n");
-	  } else {
-	    print $@;
-	  }
-	}
-      }
-
-      $sleep = $config->queue_interval;
-    }
-    else {
-      printf "Nothing found - sleeping for $sleep seconds...\n";
-
-      sleep $sleep;
-
-      $sleep += $config->queue_interval
-	unless $sleep >= $max_sleep_period;
-      
-      }
-  }
-}
-
-# $Log: QueueDaemon.pl.in,v $
-# Revision 1.1  2012/04/23 21:34:56  rlauer
-# Initial revision
-#
-# Revision 1.1.1.1  2012/04/23 01:19:56  rlauer
-# - initial project check-in
-#
-
-=pod
+Rob Lauer - <bigfoot@cpan.org>
 
 =head1 SEE ALSO
 
-C<Proc::Daemon>, C<Amazon::SQS::Config>, C<Amazon::SQS::Client>
-
-=head1 AUTHOR
-
-Rob Lauer - <rlauer6@comcast.net>
+L<Proc::Daemon>, L<Amazon::SQS::Config>, L<Amazon::SQS::Client>
 
 =cut

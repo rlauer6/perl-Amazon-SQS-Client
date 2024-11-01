@@ -14,7 +14,8 @@ AMAZON_SQS = \
    Amazon/SQS/Client.pm.in \
    Amazon/SQS/Config.pm.in \
    Amazon/SQS/Exception.pm.in \
-   Amazon/SQS/Model.pm.in
+   Amazon/SQS/Model.pm.in \
+   Amazon/SQS/QueueHandler.pm.in
 
 AMAZON_SQS_MODEL = \
     Amazon/SQS/Model/AddPermissionRequest.pm.in \
@@ -96,5 +97,13 @@ $(GPERLMODULES): % : %.in Amazon/SQS/Exception.pm
 	perl  $(PERLINCLUDE) -wc $@ || { rm $@ && exit 1; }
 
 all:
+
+test: $(GPERL_MODULES)
+	if test -n "$$TEST"; then \
+	  TEST="t/$$TEST.t"; \
+	else \
+	  TEST="t/"; \
+	fi; \
+	prove -I $(builddir) -I $$HOME/lib/perl5 -v $$TEST
 
 CLEANFILES = $(GPERLMODULES)

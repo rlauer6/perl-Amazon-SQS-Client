@@ -1,0 +1,12 @@
+ChangeLog /ChangeLog
+/examples/CreateQueueSample.pl share/CreateQueueSample.pl
+/examples/ListQueuesSample.pl share/ListQueuesSample.pl
+/examples/ChangeMessageVisibilitySample.pl share/ChangeMessageVisibilitySample.pl
+/examples/GetQueueAttributesSample.pl share/GetQueueAttributesSample.pl
+/examples/SetQueueAttributesSample.pl share/SetQueueAttributesSample.pl
+/examples/DeleteQueueSample.pl share/DeleteQueueSample.pl
+/examples/RemovePermissionSample.pl share/RemovePermissionSample.pl
+/examples/SendMessageSample.pl share/SendMessageSample.pl
+/examples/AddPermissionSample.pl share/AddPermissionSample.pl
+/examples/ReceiveMessageSample.pl share/ReceiveMessageSample.pl
+/examples/DeleteMessageSample.pl share/DeleteMessageSample.pl
