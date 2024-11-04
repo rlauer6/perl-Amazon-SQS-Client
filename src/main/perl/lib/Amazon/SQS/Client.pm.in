@@ -482,6 +482,7 @@ sub _invoke {
           }
           else {
             my $ex = $self->_reportAnyErrors( $response->content, $response->code );
+
             if ($ex) {
               Carp::croak($ex);
             }
@@ -549,61 +550,39 @@ sub _reportAnyErrors {
 ########################################################################
   my ( $self, $responseBody, $status, $e ) = @_;
 
-  my $ex;
+  my $ex = eval {
+    my $error = XML::Simple::XMLin($responseBody);
 
-  if ( defined $responseBody && $responseBody =~ m/</xsm ) {
-    if ( $responseBody
-      =~ m/<RequestId>(.*)<\/RequestId>.*<Error><Code>(.*)<\/Code><Message>(.*)<\/Message><\/Error>.*(<Error>)?/xmsg
-    ) {
-      my $requestId = $1;
-      my $code      = $2;
-      my $message   = $3;
+    return $responseBody
+      if !ref $error || !$error->{Error};
 
-      $ex = Amazon::SQS::Exception->new(
+    if ( $error->{Error} ) {
+
+      my $requestId = $error->{RequestId};
+      my $code      = $error->{Error}->{Code};
+      my $message   = $error->{Error}->{Message};
+
+      return Amazon::SQS::Exception->new(
         { Message    => $message,
           StatusCode => $status,
           ErrorCode  => $code,
-          ErrorType  => 'Unknown',
-          RequestId  => $requestId,
-          XML        => $responseBody
-        }
-      );
-
-    }
-    elsif ( $responseBody
-      =~ m/<Error>.*<Code>(.*)<\/Code><Message>(.*)<\/Message>.*<\/Error>.*(<Error>)?.*<RequestId>(.*)<\/RequestId>/msg
-    ) {
-
-      my $code      = $1;
-      my $message   = $2;
-      my $requestId = $4;
-
-      $ex = Amazon::SQS::Exception->new(
-        { Message    => $message,
-          StatusCode => $status,
-          ErrorCode  => $code,
-          ErrorType  => 'Unknown',
+          ErrorType  => $error->{Error}->{Type} // 'Unknown',
           RequestId  => $requestId,
           XML        => $responseBody
         }
       );
     }
-    else {
-      $ex = Amazon::SQS::Exception->new(
-        { Message    => 'Internal Error',
-          StatusCode => $status
-        }
-      );
+  };
+
+  return $ex
+    if ref $ex;
+
+  return Amazon::SQS::Exception->new(
+    { Message      => 'Internal Error',
+      StatusCode   => $status,
+      ResponseBody => $responseBody,
     }
-  }
-  else {
-    $ex = Amazon::SQS::Exception->new(
-      { Message    => 'Internal Error',
-        StatusCode => $status
-      }
-    );
-  }
-  return $ex;
+  );
 }
 
 #
@@ -646,9 +625,6 @@ sub _httpPost {
   #      response => $response
   #    ]
   #  );
-
-  die $response->content
-    if $response->code eq '500';
 
   return $response;
 }

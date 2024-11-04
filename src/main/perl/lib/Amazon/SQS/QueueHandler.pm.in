@@ -8,10 +8,10 @@ use English qw(-no_match_vars);
 
 use Amazon::Credentials;
 use Amazon::SQS::Model::DeleteMessageRequest;
+use Amazon::SQS::Model::ReceiveMessageRequest;
 use Amazon::SQS::Client;
-use JSON;
 use CGI::Simple;
-
+use JSON;
 use List::Util qw(none max);
 
 __PACKAGE__->follow_best_practice;
@@ -29,6 +29,7 @@ __PACKAGE__->mk_accessors(
     message_body
     raw_message
     receipt_handle
+    request
     region
     service
     signature_version
@@ -36,22 +37,24 @@ __PACKAGE__->mk_accessors(
     name
     max_messages
     url
+    visibility_timeout
+    wait_time
   )
 );
 
 use parent qw(Class::Accessor::Fast);
-use Readonly;
 
-Readonly::Array our @VALID_MESSAGE_TYPES => qw(text/plain
+our @VALID_MESSAGE_TYPES = qw(
+  text/plain
   application/json
   application/x-www-form-urlencoded
 );
 
-Readonly::Scalar our $DEFAULT_ENDPOINT_URL => 'https://queue.amazonaws.com';
-Readonly::Scalar our $MAX_MESSAGES         => 1;
+our $DEFAULT_ENDPOINT_URL = 'https://queue.amazonaws.com';
+our $MAX_MESSAGES         = 1;
 
-Readonly::Scalar our $TRUE  => 1;
-Readonly::Scalar our $FALSE => 0;
+our $TRUE  = 1;
+our $FALSE = 0;
 
 ########################################################################
 sub new {
@@ -83,6 +86,11 @@ sub new {
     }
   }
 
+  die "no queue url set\n"
+    if !$self->get_url;
+
+  $self->create_request;
+
   return $self;
 }
 
@@ -104,6 +112,8 @@ sub init_defaults {
       queue_url
       queue_name
       queue_create_queue
+      queue_visibility_timeout
+      queue_wait_time
       )
     ) {
       my $getter = "get_$_";
@@ -114,6 +124,10 @@ sub init_defaults {
         shift @local_name;
 
         my $var = join q{_}, @local_name;
+
+        next
+          if defined $self->get($var);
+
         $self->set( $var, $config->$getter() );
       }
     }
@@ -161,7 +175,7 @@ sub create_queue {
   die "could not create queue $queue_name\n$EVAL_ERROR"
     if !$queue_url || $EVAL_ERROR;
 
-  $self->set_queue_url($queue_url);
+  $self->set_url($queue_url);
 
   return $queue_url;
 }
@@ -216,35 +230,27 @@ sub create_service {
 ########################################################################
 sub decode_message {
 ########################################################################
-  my ( $self, $message ) = @_;
+  my ( $self, $message_type, $message_body ) = @_;
 
-  $self->set_raw_message($message);
-
-  $self->set_message_id( $message->getMessageId );
-
-  $self->set_receipt_handle( $message->getReceiptHandle );
-
-  my $message_body = $message->getBody();
-  $self->set_message_body($message_body);
-
-  my $type = $self->get_message_type;
+  $message_type //= $self->get_message_type;
+  $message_body //= $self->get_message_body;
 
   $self->get_logger->trace(
     Dumper(
-      [ type => $type,
-        body => $message_body
+      [ type => $message_type,
+        body => $message_body,
       ]
     )
   );
 
   my $decoded_message = eval {
     return $message_body
-      if $type eq 'text/plain';
+      if $message_type eq 'text/plain';
 
     return JSON->new->decode($message_body)
-      if $type eq 'application/json';
+      if $message_type eq 'application/json';
 
-    if ( $type eq 'application/x-www-form-encoded' ) {
+    if ( $message_type eq 'application/x-www-form-encoded' ) {
       my %vars = CGI::Simple->new($message_body)->Vars();
 
       # create array refs from multi-value params
@@ -260,8 +266,6 @@ sub decode_message {
   die "unable to decode message\n$EVAL_ERROR"
     if !defined $decoded_message || $EVAL_ERROR;
 
-  $self->set_message($decoded_message);
-
   return $decoded_message;
 }
 
@@ -273,6 +277,86 @@ sub handler {
   $self->get_logger->info( Dumper( [ message => $message ] ) );
 
   return $TRUE;
+}
+
+########################################################################
+sub get_next_message {
+########################################################################
+  my ($self) = @_;
+
+  $self->set_message(undef);
+
+  my $service = $self->get_service;
+  my $request = $self->get_request;
+
+  my $response = $service->receiveMessage($request);
+
+  return
+    if !$response || !$response->isSetReceiveMessageResult();
+
+  my $receiveMessageResult = $response->getReceiveMessageResult();
+
+  my $messageList = $receiveMessageResult->getMessage();
+
+  my ($message) = @{ $messageList // [] };
+
+  return
+    if !ref $message || !$message->isSetMessageId();
+
+  $self->set_raw_message($message);
+
+  $self->set_receipt_handle( $message->getReceiptHandle );
+
+  $self->set_message_body( $message->getBody() );
+
+  $self->set_message_id( $message->getMessageId() );
+
+  my $decoded_message = $self->decode_message();
+
+  $self->set_message($decoded_message);
+
+  return $decoded_message;
+}
+
+########################################################################
+sub create_request {
+########################################################################
+  my ($self) = @_;
+
+  return $self->get_request
+    if $self->get_request;
+
+  my $max_messages       = max( 1, $self->get_max_messages );  # max of 1 currently
+  my $wait_time          = $self->get_wait_time // 0;
+  my $visibility_timeout = $self->get_visibility_timeout;
+
+  my $request = Amazon::SQS::Model::ReceiveMessageRequest->new(
+    { QueueUrl            => $self->get_url,
+      MaxNumberOfMessages => $max_messages,
+      VisibilityTimeout   => $visibility_timeout,
+      WaitTimeSeconds     => $wait_time,
+    }
+  );
+
+  $self->set_request($request);
+
+  return;
+}
+
+########################################################################
+sub change_message_visibility {
+########################################################################
+  my ( $self, $timeout ) = @_;
+
+  my $service = $self->get_service;
+
+  $service->changeMessageVisibility(
+    QueueUrl          => $self->get_url,
+    ReceiptHandle     => $self->get_receipt_handle,
+    VisibilityTimeout => $timeout,
+  );
+
+  return;
 }
 
 ########################################################################
@@ -366,6 +450,16 @@ if you want the message deleted and a non-zero value if you want the
 message to be returned to the queue. There are various options
 available with the F<QueueDaemon.pl> script that control this behavior
 however.
+
+=head2 change_message_visibility
+
+ change_message_visibility(timeout)
+
+Changes the message visibility timeout. You may find that in some
+circumstances you would like to either extend the time the message
+remains invisible or you want to shorten the time it becomes
+available.  Use this method when your handler receives the message to
+alter the visibility of the message to other workers.
 
 =head1 NOTES
 

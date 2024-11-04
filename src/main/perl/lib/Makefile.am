@@ -91,6 +91,21 @@ PERLINCLUDE = \
    $(PERL5_EXTRA_INCLUDES) \
    -I $(perl5libdir) 
 
+Amazon/SQS/Config.pm: % : %.in
+	test -d "$$(dirname "$@")" || $(INSTALL) -d "$$(dirname "$@")"
+	$(do_subst) $< > $@
+	perl  $(PERLINCLUDE) -wc $@ || { rm $@ && exit 1; }
+
+Amazon/SQS/Client.pm: % : %.in $(GAMAZON_SQS_MODEL) Amazon/SQS/Config.pm
+	test -d "$$(dirname "$@")" || $(INSTALL) -d "$$(dirname "$@")"
+	$(do_subst) $< > $@
+	perl  $(PERLINCLUDE) -wc $@ || { rm $@ && exit 1; }
+
+Amazon/SQS/QueueHandler.pm: % : %.in $(GAMAZON_SQS_MODEL) Amazon/SQS/Client.pm
+	test -d "$$(dirname "$@")" || $(INSTALL) -d "$$(dirname "$@")"
+	$(do_subst) $< > $@
+	perl  $(PERLINCLUDE) -wc $@ || { rm $@ && exit 1; }
+
 $(GPERLMODULES): % : %.in Amazon/SQS/Exception.pm 
 	test -d "$$(dirname "$@")" || $(INSTALL) -d "$$(dirname "$@")"
 	$(do_subst) $< > $@

@@ -42,209 +42,190 @@ use base qw (Amazon::SQS::Model);
 # AttributeName: string
 # MessageAttributeName: ["string"]
 # ReceiveRequestAttemptId: "string"
-# 
-# 
+#
+#
 
 sub new {
-  my ($class, $data) = @_;
-  my $self = {};
-  
-  $self->{_fields} = {
-		      QueueUrl            => { FieldValue => undef, FieldType => "string"},
-		      MaxNumberOfMessages => { FieldValue => undef, FieldType => "int"},
-		      WaitTimeSeconds     => { FieldValue => undef, FieldType => "int"}, # rcl 11/21/2015
-		      VisibilityTimeout   => { FieldValue => undef, FieldType => "int"},
-		      AttributeName       => { FieldValue => [],    FieldType => ["string"]},
-		      MessageAttributeName => { FieldValue => [], FieldType => ["string"]},
-		      ReceiveRequestAttemptId => { FieldValue => undef, FieldType => "string"}
-		     };
-  
-  bless ($self, $class);
-  if (defined $data) {
-    $self->_fromHashRef($data); 
+  my ( $class, $data ) = @_;
+
+  my %fields = (
+    _fields => {
+      QueueUrl                => { FieldValue => undef, FieldType => 'string' },
+      MaxNumberOfMessages     => { FieldValue => undef, FieldType => 'int' },
+      WaitTimeSeconds         => { FieldValue => undef, FieldType => 'int' },
+      VisibilityTimeout       => { FieldValue => undef, FieldType => 'int' },
+      AttributeName           => { FieldValue => [],    FieldType => ['string'] },
+      MessageAttributeName    => { FieldValue => [],    FieldType => ['string'] },
+      ReceiveRequestAttemptId => { FieldValue => undef, FieldType => 'string' },
+    }
+  );
+
+  my $self = bless \%fields, $class;
+
+  if ( defined $data ) {
+    $self->_fromHashRef($data);
   }
-        
+
   return $self;
 }
 
-    # 8<---- rcl 11/21/2015 ----
-    sub getWaitTimeSeconds {
-        return shift->{_fields}->{WaitTimeSeconds}->{FieldValue};
-      }
+sub getWaitTimeSeconds {
+  my ($self) = @_;
 
-    sub setWaitTimeSeconds {
-        my ($self, $value) = @_;
+  return $self->{_fields}->{WaitTimeSeconds}->{FieldValue};
+}
 
-        $self->{_fields}->{WaitTimeSeconds}->{FieldValue} = $value;
-        return $self;
-      }
+sub setWaitTimeSeconds {
+  my ( $self, $value ) = @_;
 
-    sub withWaitTimeSeconds {
-        my ($self, $value) = @_;
-        $self->setWaitTimeSeconds($value);
-        return $self;
-      }
+  $self->{_fields}->{WaitTimeSeconds}->{FieldValue} = $value;
+  return $self;
+}
 
+sub withWaitTimeSeconds {
+  my ( $self, $value ) = @_;
+  $self->setWaitTimeSeconds($value);
+  return $self;
+}
 
-    sub isSetWaitTimeSeconds {
-        return defined (shift->{_fields}->{WaitTimeSeconds}->{FieldValue});
-      }
-    # 8<------------------------
+sub isSetWaitTimeSeconds {
+  return defined( shift->{_fields}->{WaitTimeSeconds}->{FieldValue} );
+}
 
-    sub getQueueUrl {
-        return shift->{_fields}->{QueueUrl}->{FieldValue};
-    }
+sub getQueueUrl {
+  return shift->{_fields}->{QueueUrl}->{FieldValue};
+}
 
+sub setQueueUrl {
+  my ( $self, $value ) = @_;
 
-    sub setQueueUrl {
-        my ($self, $value) = @_;
+  $self->{_fields}->{QueueUrl}->{FieldValue} = $value;
+  return $self;
+}
 
-        $self->{_fields}->{QueueUrl}->{FieldValue} = $value;
-        return $self;
-    }
+sub withQueueUrl {
+  my ( $self, $value ) = @_;
+  $self->setQueueUrl($value);
+  return $self;
+}
 
+sub isSetQueueUrl {
+  return defined( shift->{_fields}->{QueueUrl}->{FieldValue} );
+}
 
-    sub withQueueUrl {
-        my ($self, $value) = @_;
-        $self->setQueueUrl($value);
-        return $self;
-    }
+sub getReceiveRequestAttemptId {
+  return shift->{_fields}->{ReceiveRequestAttemptId}->{FieldValue};
+}
 
+sub setReceiveRequestAttemptId {
+  my ( $self, $value ) = @_;
 
-    sub isSetQueueUrl {
-        return defined (shift->{_fields}->{QueueUrl}->{FieldValue});
-    }
+  $self->{_fields}->{ReceiveRequestAttemptId}->{FieldValue} = $value;
+  return $self;
+}
 
+sub withReceiveRequestAttemptId {
+  my ( $self, $value ) = @_;
+  $self->setReceiveRequestAttemptId($value);
+  return $self;
+}
 
-    sub getReceiveRequestAttemptId {
-      return shift->{_fields}->{ReceiveRequestAttemptId}->{FieldValue};
-    }
+sub isSetReceiveRequestAttemptId {
+  return defined( shift->{_fields}->{ReceiveRequestAttemptId}->{FieldValue} );
+}
 
+sub getMaxNumberOfMessages {
+  return shift->{_fields}->{MaxNumberOfMessages}->{FieldValue};
+}
 
-    sub setReceiveRequestAttemptId {
-        my ($self, $value) = @_;
+sub setMaxNumberOfMessages {
+  my ( $self, $value ) = @_;
 
-        $self->{_fields}->{ReceiveRequestAttemptId}->{FieldValue} = $value;
-        return $self;
-    }
+  $self->{_fields}->{MaxNumberOfMessages}->{FieldValue} = $value;
+  return $self;
+}
 
+sub withMaxNumberOfMessages {
+  my ( $self, $value ) = @_;
+  $self->setMaxNumberOfMessages($value);
+  return $self;
+}
 
-    sub withReceiveRequestAttemptId {
-        my ($self, $value) = @_;
-        $self->setReceiveRequestAttemptId($value);
-        return $self;
-    }
+sub isSetMaxNumberOfMessages {
+  return defined( shift->{_fields}->{MaxNumberOfMessages}->{FieldValue} );
+}
 
+sub getVisibilityTimeout {
+  return shift->{_fields}->{VisibilityTimeout}->{FieldValue};
+}
 
-    sub isSetReceiveRequestAttemptId {
-        return defined (shift->{_fields}->{ReceiveRequestAttemptId}->{FieldValue});
-    }
+sub setVisibilityTimeout {
+  my ( $self, $value ) = @_;
 
+  $self->{_fields}->{VisibilityTimeout}->{FieldValue} = $value;
+  return $self;
+}
 
-    sub getMaxNumberOfMessages {
-        return shift->{_fields}->{MaxNumberOfMessages}->{FieldValue};
-    }
+sub withVisibilityTimeout {
+  my ( $self, $value ) = @_;
+  $self->setVisibilityTimeout($value);
+  return $self;
+}
 
+sub isSetVisibilityTimeout {
+  return defined( shift->{_fields}->{VisibilityTimeout}->{FieldValue} );
+}
 
-    sub setMaxNumberOfMessages {
-        my ($self, $value) = @_;
+sub getAttributeName {
+  return shift->{_fields}->{AttributeName}->{FieldValue};
+}
 
-        $self->{_fields}->{MaxNumberOfMessages}->{FieldValue} = $value;
-        return $self;
-    }
+sub setAttributeName {
+  my ( $self, $value ) = @_;
+  $self->{_fields}->{AttributeName}->{FieldValue} = $value;
+  return $self;
+}
 
+sub withAttributeName {
+  my ( $self, @attributes ) = @_;
 
-    sub withMaxNumberOfMessages {
-        my ($self, $value) = @_;
-        $self->setMaxNumberOfMessages($value);
-        return $self;
-    }
+  my $list = $self->{_fields}->{AttributeName}->{FieldValue};
 
+  push @{$list}, @attributes;
 
-    sub isSetMaxNumberOfMessages {
-        return defined (shift->{_fields}->{MaxNumberOfMessages}->{FieldValue});
-    }
+  return $self;
+}
 
+sub isSetAttributeName {
+  my ($self) = @_;
 
-    sub getVisibilityTimeout {
-        return shift->{_fields}->{VisibilityTimeout}->{FieldValue};
-    }
+  return @{ $self->{_fields}->{AttributeName}->{FieldValue} } > 0;
+}
 
+sub getMessageAttributeName {
+  return shift->{_fields}->{MessageAttributeName}->{FieldValue};
+}
 
-    sub setVisibilityTimeout {
-        my ($self, $value) = @_;
+sub setMessageAttributeName {
+  my ( $self, $value ) = @_;
+  $self->{_fields}->{MessageAttributeName}->{FieldValue} = $value;
+  return $self;
+}
 
-        $self->{_fields}->{VisibilityTimeout}->{FieldValue} = $value;
-        return $self;
-    }
+sub withMessageAttributeName {
+  my ( $self, @attributes ) = @_;
 
+  my $list = $self->{_fields}->{MessageAttributeName}->{FieldValue};
 
-    sub withVisibilityTimeout {
-        my ($self, $value) = @_;
-        $self->setVisibilityTimeout($value);
-        return $self;
-    }
+  push @{$list}, @attributes;
 
+  return $self;
+}
 
-    sub isSetVisibilityTimeout {
-        return defined (shift->{_fields}->{VisibilityTimeout}->{FieldValue});
-    }
+sub isSetMessageAttributeName {
+  my ($self) = @_;
 
-    sub getAttributeName {
-        return shift->{_fields}->{AttributeName}->{FieldValue};
-    }
-
-
-    sub setAttributeName    {
-        my ($self, $value) = @_;
-        $self->{_fields}->{AttributeName}->{FieldValue} = $value;
-        return $self;
-    }
-
-
-
-    sub withAttributeName {
-        my $self = shift;
-            my $list = $self->{_fields}->{AttributeName}->{FieldValue};
-            for (@_) {
-                push (@$list, $_);
-            }
-        return $self;
-    }  
-      
-
-    sub isSetAttributeName {
-        return scalar (@{shift->{_fields}->{AttributeName}->{FieldValue}}) > 0;
-    }
-
-    sub getMessageAttributeName {
-        return shift->{_fields}->{MessageAttributeName}->{FieldValue};
-    }
-
-
-    sub setMessageAttributeName    {
-        my ($self, $value) = @_;
-        $self->{_fields}->{MessageAttributeName}->{FieldValue} = $value;
-        return $self;
-    }
-
-
-
-    sub withMessageAttributeName {
-        my $self = shift;
-            my $list = $self->{_fields}->{MessageAttributeName}->{FieldValue};
-            for (@_) {
-                push (@$list, $_);
-            }
-        return $self;
-    }  
-      
-
-    sub isSetMessageAttributeName {
-        return scalar (@{shift->{_fields}->{MessageAttributeName}->{FieldValue}}) > 0;
-    }
-
-
-
+  return @{ $self->{_fields}->{MessageAttributeName}->{FieldValue} } > 0;
+}
 
 1;

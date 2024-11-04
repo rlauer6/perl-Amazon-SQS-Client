@@ -26,6 +26,8 @@ Readonly::Array our @REQUIRED_ACCESSORS => qw(
   queue_interval
   queue_max_messages
   queue_max_wait
+  queue_visibility_timeout
+  queue_wait_time
 );
 
 __PACKAGE__->follow_best_practice;
@@ -309,9 +311,32 @@ The queue URL.
 
 =item visibility_timeout
 
-The amount of time a message will remain invisible after it was
-initially read and either not deleted or it's visibility timeout has
-not been altered.
+From the AWS documentation:
+
+I<You can provide the VisibilityTimeout parameter in your request. The
+parameter is applied to the messages that Amazon SQS returns in the
+response. If you don't include the parameter, the overall visibility
+timeout for the queue is used for the returned messages. The default
+visibility timeout for a queue is 30 seconds.>
+
+default: 30
+
+=item wait_time
+
+The number of seconds to wait for a message (long polling).  The
+maximum value is 20 seconds.
+
+The advantage of using long polling is that your messages will be
+received almost as soon as they are available on the queue.  The
+disadvantage is that you may incur more costs if you are making a lot
+of calls to receive messages on a queue that is infrequently used.  In
+that case you may want to consider short polling with an C<interval>
+value. This will result in far fewer calls to receive messages but may
+delay receipt of messages up to the max wait time.
+
+I<NOTE: Using long polling instead of short polling will result in your daemon
+blocking until the ReceiveMessage API returns. Signals received during
+this period not be may not be immediately acting upon.>
 
 =back
 

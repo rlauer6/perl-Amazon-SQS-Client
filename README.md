@@ -2,6 +2,8 @@
 
 This is the README file for the `perl-Amazon-SQS-Client` project.
 
+![Build Badge](https://github.com/rlauer6/perl-Amazon-SQS-Client/actions/workflows/build.yml/badge.svg)
+
 This project contains Perl modules and example Perl scripts that
 interface with Amazon Web Service's Simple Queue Service.  The Amazon
 SQS is designed to be a component in distributed cloud based
@@ -164,9 +166,9 @@ process messages from an SQS queue. You create a class that contains a
 can learn more about the `QueueDaemon.pl` script and how to write your
 own handlers by reading the docs.
 
-`perldoc QueueHandler.pl`
-`perldoc Amazon::SQS::Config`
-`perldoc Amazon::SQS::QueueHandler`
+* `perldoc QueueHandler.pl`
+* `perldoc Amazon::SQS::Config`
+* `perldoc Amazon::SQS::QueueHandler`
 
 # Author
 

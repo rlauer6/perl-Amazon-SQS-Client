@@ -1,3 +1,39 @@
+Mon Nov  4 08:11:46 2024  Rob Lauer  <rlauer6@comcast.net>
+
+	[2.0.2]:
+	* VERSION: bump
+	* src/main/perl/bin/QueueDaemon.pl.in
+	- add options --visibility-timeout, --wait-time
+	(get_options): --wait-time, --queue-interval are mutually exclusive
+	(main)
+	- set defaults for queue-interval, max-sleep-time
+	- check url in handler, not in main
+	- only set pid file if daemonizing
+	(get_next_message): move to ::QueueHandler
+	(load_config)
+	- assign $config to avoid return undef issue that caused odd hash elements
+	- initialize visibility-timeout, wait-time
+	(sleep_time): default = 0
+	* src/main/perl/lib/Amazon/SQS/Client.pm.in
+	(_reportAnyErrors)
+	- use XML::Simple to decode error payload
+	- remove die on 500 (die on 400, 500 in main)
+	* src/main/perl/lib/Amazon/SQS/Config.pm.in
+	- add --visibility-timeout, --wait-time
+	* src/main/perl/lib/Amazon/SQS/Model/ReceiveMessageRequest.pm.in
+	- perlcritic cleanup, whitespace
+	* src/main/perl/lib/Amazon/SQS/QueueHandler.pm.in
+	- added request, visibility-timeout, wait-time options
+	- don't use Readonly if we are going to support reloading module
+	- pod updates
+	(new): die if no url set
+	(init_defaults)
+	- set visibility_timeout wait_time form config
+	(get_next_message): new
+	(create_request): new
+	* src/main/perl/lib/t/01-handler.t
+	- set test data via handler instead of creating a ::Model::Mesage
+
 Fri Nov  1 15:09:46 2024  Rob Lauer  <rlauer6@comcast.net>
 
 	[2.0.1]:
