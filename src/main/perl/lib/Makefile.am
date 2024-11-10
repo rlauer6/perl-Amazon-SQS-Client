@@ -15,6 +15,7 @@ AMAZON_SQS = \
    Amazon/SQS/Config.pm.in \
    Amazon/SQS/Exception.pm.in \
    Amazon/SQS/Model.pm.in \
+   Amazon/SQS/Sample.pm.in \
    Amazon/SQS/QueueHandler.pm.in
 
 AMAZON_SQS_MODEL = \
@@ -74,7 +75,7 @@ amz_sqs_DATA = $(GAMAZON_SQS)
 
 amz_sqs_model_DATA = $(GAMAZON_SQS_MODEL)
 
-GPERLMODULES = $(GAMAZON_SQS_MODEL) $(GAMAZON_SQS)
+GPERLMODULES = $(GAMAZON_SQS_MODEL) Amazon/SQS/Model.pm
 
 dist_noinst_DATA = $(AMAZON_SQS) $(AMAZON_SQS_MODEL)
 
@@ -90,6 +91,16 @@ PERLINCLUDE = \
    -I $(builddir) \
    $(PERL5_EXTRA_INCLUDES) \
    -I $(perl5libdir) 
+
+Amazon/SQS/Exception.pm: % : %.in
+	test -d "$$(dirname "$@")" || $(INSTALL) -d "$$(dirname "$@")"
+	$(do_subst) $< > $@
+	perl  $(PERLINCLUDE) -wc $@ || { rm $@ && exit 1; }
+
+Amazon/SQS/Sample.pm: % : %.in Amazon/SQS/Client.pm Amazon/SQS/Exception.pm
+	test -d "$$(dirname "$@")" || $(INSTALL) -d "$$(dirname "$@")"
+	$(do_subst) $< > $@
+	perl  $(PERLINCLUDE) -wc $@ || { rm $@ && exit 1; }
 
 Amazon/SQS/Config.pm: % : %.in
 	test -d "$$(dirname "$@")" || $(INSTALL) -d "$$(dirname "$@")"

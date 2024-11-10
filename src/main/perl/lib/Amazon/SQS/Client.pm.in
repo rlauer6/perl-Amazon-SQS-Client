@@ -73,6 +73,8 @@ __PACKAGE__->mk_accessors(
     Region
     v4_signer
     credentials
+    last_request
+    last_response
   )
 );
 
@@ -556,6 +558,15 @@ sub _reportAnyErrors {
     return $responseBody
       if !ref $error || !$error->{Error};
 
+    #<ErrorResponse xmlns="http://queue.amazonaws.com/doc/2012-11-05/">
+    #  <Error>
+    #    <Code>AWS.SimpleQueueService.NonExistentQueue</Code>
+    #    <Message>The specified queue does not exist for this wsdl version.</Message>
+    #    <Type>Sender</Type>
+    #  </Error>
+    # <RequestId>1bae4a91-7804-45a5-94b0-c884ddc2f140</RequestId>
+    #</ErrorResponse>
+
     if ( $error->{Error} ) {
 
       my $requestId = $error->{RequestId};
@@ -618,13 +629,11 @@ sub _httpPost {
     $self->get_v4_signer->sign($request);
   }
 
+  $self->set_last_request($request);
+
   my $response = $ua->request($request);
 
-  #  print {*STDERR} Dumper(
-  #    [ request  => $request,
-  #      response => $response
-  #    ]
-  #  );
+  $self->set_last_response($response);
 
   return $response;
 }

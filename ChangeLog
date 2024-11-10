@@ -1,3 +1,24 @@
+Sun Nov 10 08:43:30 2024  Rob Lauer  <rlauer6@comcast.net>
+
+	[2.0.3]:
+	* VERSION: bump
+	* removed all examples/*.pl files and replace with below
+	* examples/CreateQueue.pm: new
+	* examples/DeleteQueue.pm: new
+	* examples/ListQueues.pm: new
+	* examples/DeleteMessage.pm: new
+	* examples/GetQueueAttributes.pm: new
+	* examples/ReceiveMesasge.pm: new
+	* examples/SendMessage.pm: new
+	* examples/SetQueueAttributes.pm: new
+	* src/main/perl/lib/Amazon/SQS/Sample.pm.in: new
+	* src/main/perl/lib/Makefile.am: add above to build
+	* src/main/perl/lib/Amazon/SQS/Config.pm.in
+	- add aws_access_key_id, aws_secret_key to list of required methods
+	* src/main/perl/lib/Amazon/SQS/Client.pm.in
+	- add last_rqeuire, last_reponse
+	(_httpPost): set above
+
 Mon Nov  4 08:11:46 2024  Rob Lauer  <rlauer6@comcast.net>
 
 	[2.0.2]:
