@@ -6,7 +6,7 @@ use warnings;
 # faux Credentials class - just provides getters
 
 __PACKAGE__->follow_best_practice();
-__PACKAGE__->mk_accessors(qw(aws_access_key_id aws_secret_access_key token));
+__PACKAGE__->mk_accessors(qw(aws_access_key_id aws_secret_access_key token loglevel));
 
 use parent qw(Class::Accessor::Fast);
 
@@ -17,10 +17,13 @@ sub new {
 ########################################################################
   my ( $class, @args ) = @_;
 
+  my $client_options = ref $args[2] ? $args[2] : {};
+
   return $class->SUPER::new(
     { aws_access_key_id     => $args[0],
       aws_secret_access_key => $args[1],
-      ref $args[2] ? ( token => $args[2]->{SecurityToken} ) : (),
+      $client_options->{SecurityToken} ? ( token    => $client_options->{SecurityToken} ) : (),
+      $client_options->{loglevel}      ? ( loglevel => $client_options->{loglevel} )      : (),
     }
   );
 }

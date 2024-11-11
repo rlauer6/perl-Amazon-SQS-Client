@@ -1,3 +1,12 @@
+Mon Nov 11 10:30:50 2024  Rob Lauer  <rlauer6@comcast.net>
+
+	[2.0.4]:
+	* VERSION: bump
+	* README.md: create-queue.pl
+	* src/main/perl/bin/create-queue.pl.in: new
+	* src/main/perl/bin/Makefile.am: add above to build
+	* src/main/perl/lib/Amazon/SQS/Client.pm.in: loglevel
+
 Sun Nov 10 08:43:30 2024  Rob Lauer  <rlauer6@comcast.net>
 
 	[2.0.3]:

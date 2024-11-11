@@ -173,6 +173,37 @@ to configure the examples.
  perldoc Amazon::SQS::Config
 ```
 
+# `create-queue.pl`
+
+Use this script to create a new queue and optionally an associated
+dead letter queue. There are also some commands you can use to
+examine, send and receive messages.
+
+* create a queue with an associated DLQ
+  ```
+  create-queue.pl -q fuManQueue create
+  ```
+* show queue attributes
+  ```
+  create-queue.pl -q fuManQueue attribute
+  ```
+* list queues
+  ```
+  create-queue.pl list
+  ```
+* send a message
+  ```
+  create-queue.pl -q fuManQueue send-message 'Hello World!'
+  ```
+* delete the queues
+  ```
+  create-queue.pl -q fuManQueue delete
+  ```
+* receive a message
+  ```
+  create-queue.pl -q fuManQueue receive-message
+  ```
+
 # `QueueDaemon.pl`
 
 This is a fairly robust implementation of a daemon that will read and

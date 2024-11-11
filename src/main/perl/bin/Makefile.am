@@ -6,10 +6,12 @@ perl5libdir = @perl5libdir@
 ax_perl5_extra_includes_opt = @ax_perl5_extra_includes_opt@
 
 bin_SCRIPTS = \
-    QueueDaemon.pl
+    QueueDaemon.pl \
+    create-queue.pl
 
 PERLSCRIPTS = \
-    QueueDaemon.pl.in
+    QueueDaemon.pl.in \
+    create-queue.pl.in
 
 GPERLSCRIPTS = $(PERLSCRIPTS:.pl.in=.pl)
 
