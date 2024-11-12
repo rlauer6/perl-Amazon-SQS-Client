@@ -433,9 +433,13 @@ __END__
 
  create-queue.pl options command
 
-By default will creates two queues, a primary queue and an associated
-dead letter queue. The dead letter queue will be created with the name
-as the primary queue with a 'DLQ' suffix.
+Use this script to perform various SQS API commands. You can use this
+script to create queues, list queues, send and receive messages and more.
+
+By default if you use the C<create>, the script will create
+two queues; a primary queue and an associated dead letter queue. The
+dead letter queue will be created with the name as the primary queue
+with a 'DLQ' suffix.
 
 Pass the C<--no-dlq> option if you don't want a dead letter queue.
 
@@ -449,6 +453,8 @@ Pass the C<--no-dlq> option if you don't want a dead letter queue.
 
 You can control the attributes of the new queue by setting the various
 queue options (e.g. C<--visibility-timeout>, etc)
+
+Use the C<--no-dlq> to prevent the dead letter queue from being created.
 
 =item delete - delete the primary and dead letter queue (if it exists)
 
@@ -465,6 +471,8 @@ queue options (e.g. C<--visibility-timeout>, etc)
 =item delete-message - delete a message
 
  delete-message receipt-handle
+
+=back
 
 =head1 OPTIONS
 
@@ -521,5 +529,9 @@ queue options (e.g. C<--visibility-timeout>, etc)
  integer from 0 to 43,200 (12 hours). Default: 30. For more
  information about the visibility timeout, see Visibility Timeout in
  the Amazon SQS Developer Guide.
+
+=head2 AUTHOR
+
+Rob Lauer - <bigfoot@cpan.org>
 
 =cut

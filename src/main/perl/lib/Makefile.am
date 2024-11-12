@@ -13,6 +13,7 @@ logdir = @localstatedir@/log
 AMAZON_SQS = \
    Amazon/SQS/Client.pm.in \
    Amazon/SQS/Config.pm.in \
+   Amazon/SQS/Constants.pm.in \
    Amazon/SQS/Exception.pm.in \
    Amazon/SQS/Model.pm.in \
    Amazon/SQS/Sample.pm.in \
@@ -75,7 +76,7 @@ amz_sqs_DATA = $(GAMAZON_SQS)
 
 amz_sqs_model_DATA = $(GAMAZON_SQS_MODEL)
 
-GPERLMODULES = $(GAMAZON_SQS_MODEL) Amazon/SQS/Model.pm
+GPERLMODULES = $(GAMAZON_SQS_MODEL)
 
 dist_noinst_DATA = $(AMAZON_SQS) $(AMAZON_SQS_MODEL)
 
@@ -92,7 +93,17 @@ PERLINCLUDE = \
    $(PERL5_EXTRA_INCLUDES) \
    -I $(perl5libdir) 
 
+Amazon/SQS/Constants.pm: % : %.in
+	test -d "$$(dirname "$@")" || $(INSTALL) -d "$$(dirname "$@")"
+	$(do_subst) $< > $@
+	perl  $(PERLINCLUDE) -wc $@ || { rm $@ && exit 1; }
+
 Amazon/SQS/Exception.pm: % : %.in
+	test -d "$$(dirname "$@")" || $(INSTALL) -d "$$(dirname "$@")"
+	$(do_subst) $< > $@
+	perl  $(PERLINCLUDE) -wc $@ || { rm $@ && exit 1; }
+
+Amazon/SQS/Model.pm: % : %.in Amazon/SQS/Constants.pm
 	test -d "$$(dirname "$@")" || $(INSTALL) -d "$$(dirname "$@")"
 	$(do_subst) $< > $@
 	perl  $(PERLINCLUDE) -wc $@ || { rm $@ && exit 1; }
@@ -102,22 +113,22 @@ Amazon/SQS/Sample.pm: % : %.in Amazon/SQS/Client.pm Amazon/SQS/Exception.pm
 	$(do_subst) $< > $@
 	perl  $(PERLINCLUDE) -wc $@ || { rm $@ && exit 1; }
 
-Amazon/SQS/Config.pm: % : %.in
+Amazon/SQS/Config.pm: % : %.in  Amazon/SQS/Constants.pm
 	test -d "$$(dirname "$@")" || $(INSTALL) -d "$$(dirname "$@")"
 	$(do_subst) $< > $@
 	perl  $(PERLINCLUDE) -wc $@ || { rm $@ && exit 1; }
 
-Amazon/SQS/Client.pm: % : %.in $(GAMAZON_SQS_MODEL) Amazon/SQS/Config.pm
+Amazon/SQS/Client.pm: % : %.in Amazon/SQS/Model.pm $(GAMAZON_SQS_MODEL) Amazon/SQS/Config.pm 
 	test -d "$$(dirname "$@")" || $(INSTALL) -d "$$(dirname "$@")"
 	$(do_subst) $< > $@
 	perl  $(PERLINCLUDE) -wc $@ || { rm $@ && exit 1; }
 
-Amazon/SQS/QueueHandler.pm: % : %.in $(GAMAZON_SQS_MODEL) Amazon/SQS/Client.pm
+Amazon/SQS/QueueHandler.pm: % : %.in Amazon/SQS/Client.pm
 	test -d "$$(dirname "$@")" || $(INSTALL) -d "$$(dirname "$@")"
 	$(do_subst) $< > $@
 	perl  $(PERLINCLUDE) -wc $@ || { rm $@ && exit 1; }
 
-$(GPERLMODULES): % : %.in Amazon/SQS/Exception.pm 
+$(GPERLMODULES): % : %.in Amazon/SQS/Exception.pm Amazon/SQS/Constants.pm
 	test -d "$$(dirname "$@")" || $(INSTALL) -d "$$(dirname "$@")"
 	$(do_subst) $< > $@
 	perl  $(PERLINCLUDE) -wc $@ || { rm $@ && exit 1; }

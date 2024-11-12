@@ -156,7 +156,6 @@ AX_DISTCHECK_HACK
 
 AC_CONFIG_FILES([
     Makefile
-    resources/Makefile
     src/Makefile
     src/main/Makefile
     src/main/bash/Makefile

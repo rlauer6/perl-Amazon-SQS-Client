@@ -1,7 +1,8 @@
 #!@bashrun@
+# -*- mode:sh; -*-
 
 # chkconfig: 2345 99 1
-# description: Example AWS SQS perl queue handler
+# description: Example AWS SQS Perl queue handler
 # processname: aws-sqsd
 # pidfile: /var/run/QueueDaemon.pl.pid
 
@@ -11,9 +12,14 @@ pidfile=/var/run/QueueDaemon.pl.pid
 prog=aws-sqsd
 
 start() {
+    if !test -e @datadir@/sqs/aws-sqs.ini; then
+        echo "no @datadir@/sqs/aws-sqs.ini file found!"
+        exit;
+    fi
+
     echo -n $"Starting $prog: "
 
-    @bindir@/QueueDaemon.pl --config=/usr/share/amazon-web-services/sqs/aws-sqs.ini
+    @bindir@/QueueDaemon.pl --config=@datadir@/sqs/aws-sqs.ini
 
     sleep 1;
 

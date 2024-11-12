@@ -266,6 +266,8 @@ sub decode_message {
   die "unable to decode message\n$EVAL_ERROR"
     if !defined $decoded_message || $EVAL_ERROR;
 
+  $self->set_message($decoded_message);
+
   return $decoded_message;
 }
 

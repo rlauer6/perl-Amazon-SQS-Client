@@ -51,6 +51,7 @@ use strict;
 use warnings;
 
 use Amazon::Credentials;
+use Amazon::SQS::Constants qw(:all);
 use Amazon::SQS::Exception;
 use Carp qw(croak);
 use Data::Dumper;
@@ -80,20 +81,6 @@ __PACKAGE__->mk_accessors(
     last_response
   )
 );
-
-use Readonly;
-
-Readonly::Scalar our $TRUE  => 1;
-Readonly::Scalar our $FALSE => 0;
-
-Readonly::Scalar our $EMPTY     => q{};
-Readonly::Scalar our $AMPERSAND => q{&};
-Readonly::Scalar our $EQUAL     => q{=};
-Readonly::Scalar our $SLASH     => q{/};
-
-Readonly::Scalar our $HTTP_OK                    => '200';
-Readonly::Scalar our $HTTP_INTERNAL_SERVER_ERROR => '500';
-Readonly::Scalar our $HTTP_GATEWAY_TIMEOUT       => '503';
 
 use parent qw(Class::Accessor::Fast);
 
@@ -619,7 +606,7 @@ sub _httpPost {
   foreach my $parameterName ( keys %{$parameters} ) {
     no warnings 'uninitialized';  ## no critic
 
-    $data .= $parameterName . $EQUAL . $self->_urlencode( $parameters->{$parameterName}, 0 );
+    $data .= $parameterName . $EQUALS . $self->_urlencode( $parameters->{$parameterName}, 0 );
     $data .= $AMPERSAND;
   }
 
@@ -745,7 +732,7 @@ sub _calculateStringToSignV2 {
 
   foreach my $parameterName ( sort { $a cmp $b } @parameterKeys ) {
     no warnings 'uninitialized';  ## no critic
-    $data .= $parameterName . $EQUAL . $self->_urlencode( $parameters->{$parameterName} );
+    $data .= $parameterName . $EQUALS . $self->_urlencode( $parameters->{$parameterName} );
     $data .= $AMPERSAND;
   }
 
@@ -788,7 +775,7 @@ sub _sign {
     Carp::croak('Non-supported signing method specified');
   }
 
-  return $output . $EQUAL;
+  return $output . $EQUALS;
 }
 
 #

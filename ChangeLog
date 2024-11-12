@@ -1,3 +1,33 @@
+Tue Nov 12 07:42:48 2024  Rob Lauer  <rlauer6@comcast.net>
+
+	[2.0.5]:
+	* README.md: reorganize
+	* VERSION: bump
+	* NEWS: update for new version
+	* resources/*: removed
+	* configure.ac: remove above
+	* Makefile.am
+	- change install dir to $datadir/amazon-sqs
+	- remove required-modules
+	- remove resources
+	* src/main/bash/bin/aws-sqsd.in: check for .ini file
+	* src/main/perl/bin/create-queue.pl.in: pod tweaks & fixes
+	* src/main/lib/Amazon/SQS/QueueHandler.pm.in
+	(decode_message): save decoded message
+	* src/main/perl/lib/Amazon/SQS/Client.pm.in: perlcritic cleanup
+	* src/main/perl/lib/Amazon/SQS/Exception.pm.in: likewise
+	* src/main/perl/lib/Amazon/SQS/Model.pm.in: likewise
+	* src/main/perl/lib/Amazon/SQS/Model/Message.pm.in: likewise
+	* src/main/perl/lib/Amazon/SQS/Model/ReceiveMessageRequest.pm.in: likewise
+	* src/main/perl/lib/Amazon/SQS/Model/ReceiveMessageResponse.pm.in: likewise
+	* src/main/perl/lib/Amazon/SQS/Model/SendMessageRequest.pm.in: likewise
+	* src/main/perl/lib/Amazon/SQS/Model/SendMessageResponse.pm.in: likewise
+	* src/main/perl/lib/Amazon/SQS/Constants.pm.in: new
+	* src/main/perl/lib/Makefile.am: add above to build
+	* src/main/perl/lib/t/01-handler.t: fix failing test
+	* cpan/extra-files: replaced .pl examples with .pm
+	* cpan/provides: new
+
 Mon Nov 11 10:30:50 2024  Rob Lauer  <rlauer6@comcast.net>
 
 	[2.0.4]:

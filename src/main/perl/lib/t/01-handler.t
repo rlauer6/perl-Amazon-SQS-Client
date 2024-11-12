@@ -18,7 +18,11 @@ subtest 'decode message' => sub {
 ########################################################################
   use_ok('Amazon::SQS::QueueHandler');
 
-  my $handler = eval { return Amazon::SQS::QueueHandler->new( logger => Log::Log4perl->get_logger ); };
+  local $ENV{AWS_ACCESS_KEY_ID}     = 'foo';
+  local $ENV{AWS_SECRET_ACCESS_KEY} = 'bar';
+
+  my $handler
+    = eval { return Amazon::SQS::QueueHandler->new( logger => Log::Log4perl->get_logger, url => 'blah' ); };
 
   ok( $handler, 'created handler' )
     or do {
