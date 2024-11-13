@@ -7,18 +7,20 @@ use warnings;
 package main;
 ########################################################################
 
+use Class::Inspector;
+use Class::Unload;
 use Cwd;
 use Data::Dumper;
 use English qw(-no_match_vars);
+use File::Basename qw(fileparse);
 use Getopt::Long qw(:config no_ignore_case);
 use List::Util qw(max min);
-use Log::Log4perl qw(:easy);
+use Log::Log4perl;
 use Log::Log4perl::Level;
 use Pod::Usage;
 use Proc::Daemon;
 use Proc::PID::File;
 use Module::Load qw(autoload);
-use Module::Loaded qw(mark_as_unloaded is_loaded);
 
 use Amazon::SQS::Config;
 use Amazon::SQS::Client;
@@ -30,6 +32,24 @@ Readonly::Scalar our $FALSE => 0;
 
 Readonly::Scalar our $DEFAULT_SLEEP_TIME => 5;
 Readonly::Scalar our $MAX_SLEEP_TIME     => 60;
+Readonly::Scalar our $APPENDER_NAME      => 'LOGFILE';
+
+Readonly::Scalar our $LOGFILE_CONFIG => <<'END_OF_LOGGER';
+log4perl.rootLogger=INFO, LOGFILE
+log4perl.appender.LOGFILE=Log::Log4perl::Appender::File
+log4perl.appender.LOGFILE.filename=%s
+log4perl.appender.LOGFILE.mode=append
+log4perl.appender.LOGFILE.layout=PatternLayout
+log4perl.appender.LOGFILE.layout.ConversionPattern=%%d (%%r,%%R) (%%p/%%c) [%%P] [%%M:%%L] - %%m%%n
+END_OF_LOGGER
+
+Readonly::Scalar our $SCREEN_CONFIG => <<'END_OF_LOGGER';
+log4perl.rootLogger=INFO, SCREEN
+log4perl.appender.SCREEN=Log::Log4perl::Appender::Screen
+log4perl.appender.SCREEN.stderr=%s
+log4perl.appender.SCREEN.layout=PatternLayout
+log4perl.appender.SCREEN.layout.ConversionPattern=%%d (%%r,%%R) (%%p/%%c) [%%P] [%%M:%%L] - %%m%%n
+END_OF_LOGGER
 
 our $KEEP_GOING = $TRUE;
 our $RELOAD     = $FALSE;
@@ -50,6 +70,7 @@ sub get_options {
     max-children|m=i
     max-sleep-time=i
     max-messages=i
+    pidfile|p=s
     queue|q=s
     queue-interval|I=i
     handler|H=s
@@ -108,22 +129,26 @@ sub main {
   );
 
   # instantiate Amazon::SQS::QueueHandler class
-  my $handler = load_handler(
-    config  => $config,
-    options => \%options,
-    logger  => $logger
-  );
+  my $handler = eval { return load_handler( config => $config, options => \%options, logger => $logger ); };
 
   if ( !$handler || $EVAL_ERROR ) {
-    die Dumper $EVAL_ERROR
-      if ref $EVAL_ERROR;
-
-    die "could not instantiate handler\n$EVAL_ERROR";
+    my $err = $EVAL_ERROR;
+    if ( ref $err ) {
+      die sprintf
+        "\rERROR: could not instantiate handler:\nMessage:\t[%s]\nCode:\t\t[%s]\nHTTP Response:\t[%s]\n",
+        $err->getMessage,
+        $err->getErrorCode,
+        $err->getHTTPError;
+    }
+    elsif ($err) {
+      die "ERROR: could not instantiate handler:\n$err";
+    }
+    else {
+      die "ERROR: could not instantiate handler\n";
+    }
   }
 
   # set up signal handlers
-  $logger->info('setting up signal handlers');
-
   setup_signal_handlers( \%options, \$handler );
 
   my $service = $handler->get_service;
@@ -131,25 +156,32 @@ sub main {
   if ( $options{daemonize} ) {
     my @dont_close_fh;
 
-    if ( !$config || !$config->get_log_stderr ) {
-      push @dont_close_fh, 'STDERR';
+    if ( $options{logfile} && $options{logfile} !~ /(?:stderr|stdout)/ixsm ) {
+      my $appender = Log::Log4perl->appender_by_name($APPENDER_NAME);
+      push @dont_close_fh, $appender->{fh};
     }
 
-    if ( !$config || !$config->get_log_stdout ) {
-      push @dont_close_fh, 'STDOUT';
-    }
+    push @dont_close_fh, 'STDERR';
+    push @dont_close_fh, 'STDOUT';
 
     my %daemon_config = (
       work_dir => cwd,
-      $config && $config->get_log_stdout ? ( child_STDOUT => $config->get_log_stdout ) : (),
-      $config && $config->get_log_stderr ? ( child_STDERR => $config->get_log_stderr ) : (),
       @dont_close_fh ? ( dont_close_fh => \@dont_close_fh ) : (),
     );
 
     Proc::Daemon->new(%daemon_config)->Init();
 
+    my %pidfile;
+
+    if ( $config && $config->get_handler_pidfile ) {
+      my ( $name, $path, $ext ) = fileparse( $config->get_handler_pidfile, qr/[.][^.]+$/xsm );
+      $pidfile{dir} = $path;
+      $ext //= 'pid';
+      $pidfile{name} = sprintf '%s.%s', $name, $ext;
+    }
+
     # If already running, then exit
-    if ( Proc::PID::File->running( dir => cwd ) ) {
+    if ( Proc::PID::File->running(%pidfile) ) {
       $logger->error('already running...');
       exit 0;
     }
@@ -195,7 +227,7 @@ sub main {
     undef $sleep;
 
     my $retval = eval {
-      die $err
+      die Dumper( [ error => $err ] )
         if $err;
 
       $logger->info( 'processing messsage (%s)...', $handler->get_message_id );
@@ -274,19 +306,30 @@ sub init_logger {
 
   $loglevel //= $INFO;
 
-  if ( Log::Log4perl->initialized ) {
+  $logfile //= 'stderr';
+
+  my $log4perl_config;
+
+  if ( !$logfile || $logfile =~ /(?:stderr|stdout)/xsmi ) {
+    $log4perl_config    = sprintf $SCREEN_CONFIG, $logfile eq 'stdout' ? 0 : 1;
+    $options->{logfile} = lc $logfile;
+  }
+  else {
+    $log4perl_config = sprintf $log4perl_config, $logfile;
+  }
+
+  if ( Log::Log4perl->initialized() ) {
     my $logger = Log::Log4perl->get_logger;
     $logger->level($loglevel);
     return $logger;
   }
 
-  Log::Log4perl->easy_init(
-    { level => $loglevel,
-      $logfile ? ( file => $logfile ) : ()
-    }
-  );
+  Log::Log4perl->init( \$log4perl_config );
 
-  return Log::Log4perl->get_logger;
+  my $logger = Log::Log4perl->get_logger;
+  $logger->level($loglevel);
+
+  return $logger;
 }
 
 ########################################################################
@@ -341,14 +384,16 @@ sub load_config {
 
   my $config = Amazon::SQS::Config->new( file => $options->{config} );
 
-  $options->{loglevel} = $config->get_aws_log_level // $options->{loglevel};
-  $options->{logfile}  = $config->get_aws_log_file  // $options->{logfile};
+  $options->{loglevel} //= $config->get_log_level;
 
-  $options->{'delete-when'} = $config->get_error_delete // $options->{'delete-when'};
+  $options->{logfile} //= $config->get_log_file;
+  $options->{logfile} //= 'stderr';
 
-  $options->{'exit-when'} = $config->get_error_exit // $options->{'exit-when'};
+  $options->{'delete-when'} //= $config->get_error_delete;
 
-  $options->{handler} = $config->get_handler_class // $options->{handler};
+  $options->{'exit-when'} //= $config->get_error_exit;
+
+  $options->{handler} //= $config->get_handler_class;
 
   $options->{'max-sleep-time'} //= $config->get_queue_max_wait;
 
@@ -376,8 +421,8 @@ sub load_handler {
 
   my ( $config, $options, $logger, $credentials ) = @args{qw(config options logger credentials)};
 
-  if ( 1 || is_loaded( $options->{handler} ) ) {
-    mark_as_unloaded( $options->{handler} );
+  if ( Class::Inspector->loaded( $options->{handler} ) ) {
+    Class::Unload->unload( $options->{handler} );
   }
 
   autoload $options->{handler};
@@ -447,13 +492,14 @@ Implements a daemon that reads from Amazon's Simple Queue Service
  -L, --logfile            name of logfile
  -l, --loglevel           log level (trace, debug, info, warn, error)
  -H, --handler            name of the handler class, default: Amazon::SQS::QueueHandler
- -m, --max-children       not implemented
+ -m, --max-children       not implemented (default: 1)
  -s, --max-sleep-time     default: 5 seconds
      --max-messages       fixed at 1 currently
  -M, --message-type       mime type of messages (text/plain, application/json, 
                           application/x-www-form-encoded), default: text/plain
  -q, --queue              queue name (not url)
      --queue-interval     amount of time to sleep
+ -p, --pidfile            fully qualified path of pid file, default: /var/run/QueueDaemon.pl.in
  -v, --visibility-timeout visibility timeout in seconds, default: 30
  -w, --wait-time          long polling wait time in seconds, default: 0
 
@@ -482,7 +528,7 @@ This is free software and may be used or distributed under the same terms as Per
 
 =head2 Quick Start
 
- QueueDaemon.pl -C -q fooManQueue
+ QueueDaemon.pl --create-queue -q fooManQueue
 
 =over 5 
 
@@ -513,21 +559,33 @@ file, set 'exit = error'.
 
 =back
 
-On a RedHat or CentOS system, use C<chkconfig> to add the example daemon.
-
- $ chkconfig --add aws-sqsd
-
-The daemons should be started and stopped using C</sbin/service> program as follows:
+The daemon can be started using the helper script C<aws-sqsd>.
 
 =over 5
 
 =item Starting
 
- $ sudo /sbin/service aws-sqsd start
+By default the startup script will look for the script
+(C<QueueDaemon.pl>) and the configuration file (C<aws-sqs.ini>) in all
+of the places where they should have been installed regardless of
+whether you installed the program as a CPAN distribution or manually
+(C<./configure && make && make install>).  If you've relocated the
+program or the configuration file you use environment variables to
+tell the startup script where to look for these artifacts.
+
+=over 10
+
+=item CONFIG - fully qualified path the configuration file
+
+=item DAEMON - fully qualified path to the C<QueueDaemon.pl> script.
+
+=back
+
+ sudo CONFIG=/etc/myapp/aws-sqs.ini aws-sqsd start
 
 =item Stopping
 
- $ sudo /sbin/service aws-sqsd stop
+ sudo /sbin/service aws-sqsd stop
 
 =item Restarting
 

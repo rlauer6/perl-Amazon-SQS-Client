@@ -29,22 +29,22 @@ up to the Perl community to hack-patch these modules or write new ones
 So why reboot this module? I like the fact that this set of modules is
 relatively light weight and requires only a few extra Perl modules
 rather than a heavy weight solution like `PAWS` that requires `Moose`
-and it's assorted friends. Along with creating a build system that
-will create a tar ball, RPM or CPAN distributions I've also added a
-bonus script [QueueDaemon.pl](src/main/perl/bin/QueuDaemon.pl.in) that
-implements a daemon that will read and process SQS messages.
+and its assorted friends. Along with creating a build system that will
+create a tar ball, RPM or a CPAN distribution, this project also
+includes a bonus script
+[QueueDaemon.pl](src/main/perl/bin/QueuDaemon.pl.in) that implements a
+daemon that will read and process SQS messages.
 
 > Incidentally it should be possible with a little work to refactor
-this module out of the `QueueDaemon.pl` script and replace it with one
-of the other SQS Perl implementations.
+`Amazon::SQS::Client` out of the `QueueDaemon.pl` script and replace
+it with one of the other SQS Perl implementations.
 
 The classes that were implemented by AWS are pretty basic and
 a little verbose to use sometimes.  Here's an example that retrieves a
 list of SQS queues:
 
 ```
-my $sqs = Amazon::SQS::Client->new($ENV{AWS_ACCESS_KEY_ID}, $ENV{AWS_SECRET_ACCESS_KEY},
-                                   { ServiceURL => 'https://queue.amazonaws.com' });
+my $sqs = Amazon::SQS::Client->new();
 
 my $request = Amazon::SQS::Model::ListQueuesRequest->new();
 
@@ -63,12 +63,21 @@ and light-weight is your goal...keep reading.
 1. This project can create a tar ball, an RPM or a CPAN distribution
 2. This project includes a so-called "queue daemon" in the form of a Perl script for handling SQS
 messages [`QueueDaemon.pl`](src/main/perl/bin/QueueDaemon.pl.in)
-3. Long polling - support for API version 2012-11-05 `WaitTimeSeconds`
-parameter to the `ReceiveMessage` API call for implementing _long polling_
+3. Long polling - support for the API version 2012-11-05 `WaitTimeSeconds`
+parameter to the `ReceiveMessage` API for implementing _long polling_
 4. Support for temporary security tokens.
 5. Support for Signature Version 4 (via `AWS::Signature4`)
-6. Use `Amazon::Credentials` for transaparent supplying of credentials
+6. Uses `Amazon::Credentials` for transaparent supplying of credentials
 7. Refactored examples
+
+> The use of `Amazon::Credential` makes it a little simpler to
+> instantiate the client and a bit safer too.  However if you really
+> want to pass your credentials to `Amazon::SQS::Client` you can do
+> that too.
+
+```
+ my $client = Amazon::SQS::Client->new($access_key_id, $secret_access_key, $token);
+```
 
 ## Examples
 
@@ -82,7 +91,7 @@ follows:
 
 * can read a configuration file (.ini style) of the same type as
   supported by the `QueueDaemon.pl` script
-* accepts a list of argument on the command line
+* accepts a list of arguments on the command line
 * provides some help for each example
 
 If you installed this package from a CPAN distribution you'll find the
@@ -145,6 +154,8 @@ complete documentation.
 * Carp
 * CGI::Simple
 * Class::Accessor::Fast
+* Class::Unload
+* Class::Inspector
 * Config::IniFiles
 * Digest::SHA 6.02
 * English
@@ -174,7 +185,7 @@ sudo make install
 # Building a CPAN Distribution
 
 In order to build the CPAN distribution you need to install all of the
-these dependencies previously mentioned.
+the dependencies previously mentioned.
 
 First build the project in the normal manner.
 

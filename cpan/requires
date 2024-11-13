@@ -1,7 +1,10 @@
 AWS::Signature4 1.02
+Amazon::Credentials 0
 Carp 1.50
 CGI::Simple 1.281
 Class::Accessor::Fast 0.51
+Class::Unload 0
+Class::Inspector 0
 Config::IniFiles 3.000003
 Data::Dumper 2.183
 Digest::SHA 6.02
@@ -11,6 +14,9 @@ List::Util 1.63
 Log::Log4perl 1.57
 Log::Log4perl::Level 0
 LWP::UserAgent 6.77
+Module::ScanDeps::Static 0
+Proc::Daemon 0
+Proc::PID::File 0
 Readonly 2.05
 Scalar::Util 1.63
 strict 1.07

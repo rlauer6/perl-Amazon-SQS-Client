@@ -58,15 +58,17 @@ sub new {
       $self->{_errorType}  = $exception->getErrorType();
       $self->{_requestId}  = $exception->getRequestId();
       $self->{_xml}        = $exception->getXML();
+      $self->{_httpError}  = $exception->getHTTPError();
     }
   }
   else {
-    $self->{_message}    = $errorInfo->{Message};
-    $self->{_statusCode} = $errorInfo->{StatusCode};
-    $self->{_errorCode}  = $errorInfo->{ErrorCode};
-    $self->{_errorType}  = $errorInfo->{ErrorType};
-    $self->{_requestId}  = $errorInfo->{RequestId};
-    $self->{_xml}        = $errorInfo->{XML};
+    $self->{_message}    = $errorInfo->{Message}    // q{};
+    $self->{_statusCode} = $errorInfo->{StatusCode} // q{};
+    $self->{_errorCode}  = $errorInfo->{ErrorCode}  // q{};
+    $self->{_errorType}  = $errorInfo->{ErrorType}  // q{};
+    $self->{_requestId}  = $errorInfo->{RequestId}  // q{};
+    $self->{_xml}        = $errorInfo->{XML}        // q{};
+    $self->{_httpError}  = $errorInfo->{HTTPError}  // q{};
   }
 
   return bless $self, $class;
@@ -116,6 +118,13 @@ sub getXML {
 #
 sub getRequestId {
   return shift->{_requestId};
+}
+
+#
+# Gets the HTTP error response
+#
+sub getHTTPError {
+  return shift->{_httpError};
 }
 
 1;

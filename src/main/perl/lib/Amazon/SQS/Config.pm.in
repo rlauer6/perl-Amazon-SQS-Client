@@ -13,15 +13,14 @@ our $VERSION = '@PACKAGE_VERSION@';
 use Readonly;
 
 Readonly::Array our @REQUIRED_ACCESSORS => qw(
-  aws_log_file
-  aws_log_level
   aws_access_key_id
   aws_secret_access_key
   error_delete
   error_exit
   handler_class
-  log_stderr
-  log_stdout
+  handler_pidfile
+  log_file
+  log_level
   queue_create_queue
   queue_name
   queue_url
@@ -91,16 +90,19 @@ sub create_config_accessors {
 
     if (@extra_vars) {
       no strict 'refs';  ## no critic (ProhibitNoStrict)
+      my @ok_vars;
 
       for (@extra_vars) {
 
         my $name = $section eq 'main' ? $_ : "${section}_$_";
 
-        die "attempt to redefine $name\n"
+        next
           if defined *{ ref($self) . q{::} . "get_$name" }{CODE};
+
+        push @ok_vars, $_;
       }
 
-      $self->mk_accessors( map { $section eq 'main' ? $_ : "${section}_$_" } @extra_vars );
+      $self->mk_accessors( map { $section eq 'main' ? $_ : "${section}_$_" } @ok_vars );
 
       for (@extra_vars) {
         my $name = $section eq 'main' ? $_ : "${section}_$_";
@@ -146,7 +148,7 @@ The handler section describes your queue handler and other attributes
 that control how messages are processed.
 
   [handler]
-  name = MyHandler
+  class = MyHandler
   message_type = application/json
   max_children = 1
 
@@ -179,6 +181,12 @@ decoded messsage is also available using the getter C<get_message>.>
 The maximum number of children that can be instantiated by the
 F<QueuDaemon.pl> script.  Currently the maximum is 1.  Future versions
 may support forking.
+
+=item pidfile
+
+Path of the pid file.
+
+default: /var/run/QueueDaemon.pl.pid
 
 =back
 
@@ -380,10 +388,8 @@ automatically for you that will log to the parent's STDERR. See note
 below regarding how the daemonization process closes STDOUT, STDERR.
 
   [log]
-  stdout = /tmp/amazon_sqs.log
-  stderr = /tmp/amazon_sqs.log
   level = debug
-  logfile = /tmp/amazon_sqs.log
+  file = /tmp/amazon_sqs.log
 
 When you daemonize the script, if either C<stdout> or C<stderr> is set
 the parent's STDOUT or STDERR will be closed and then reopened using
@@ -392,21 +398,14 @@ closed. The closing STDERR will stop the C<Log::Log4perl> logger.
 
 =over 5
 
-=item stdout
-
-Destination for STDOUT messages.
-
-=item stderr
-
-Destination for STDERR messages.
-
 =item level
 
-C<Log::Log4perl> logginging level ('trace', 'debug', 'info', 'warn', 'error').
+C<Log::Log4perl> logging level ('trace', 'debug', 'info', 'warn', 'error').
 
-=item logfile
+=item file
 
-Name of a logfile for C<Log::Log4perl> messages.
+Name of a log file for C<Log::Log4perl> messages. You can also use the
+values of 'stdout' or 'stderr' to log to STDOUT and STDERR.
 
 =back
 

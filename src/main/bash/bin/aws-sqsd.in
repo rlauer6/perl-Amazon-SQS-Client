@@ -8,18 +8,47 @@
 
 . /etc/rc.d/init.d/functions
 
-pidfile=/var/run/QueueDaemon.pl.pid
 prog=aws-sqsd
 
-start() {
-    if !test -e @datadir@/sqs/aws-sqs.ini; then
-        echo "no @datadir@/sqs/aws-sqs.ini file found!"
-        exit;
+########################################################################
+function find_queue_daemon {
+########################################################################
+
+    DAEMON=$(command -v QueueDaemon.pl)
+    DAEMON=${DAEMON:-@bindir@/QueueDaemon.pl}
+
+    if ! test -e "$DAEMON"; then
+        eval $(perl -MConfig -MData::Dumper -e 'print Config::config_re(qr/installsitebin/);');
+        DAEMON="$installsitebin/QueueDaemon.pl"
     fi
+    
+    if ! test -e "$DAEMON"; then
+        echo "could not find QueueDaemon.pl\n";
+        exit 1;
+    fi
+}
+
+########################################################################
+function find_config {
+########################################################################
+    CONFIG=${CONFIG:-@datadir@/sqs/aws-sqs.ini};
+
+    if ! test -e "$CONFIG"; then
+        CONFIG_DIR=$(perl -MFile::ShareDir=dist_dir -e 'print dist_dir("Amazon-SQS-Client");')
+        CONFIG="$CONFIG_DIR/sqs/aws-sqs.ini"
+    fi
+
+    if ! test -e "$CONFIG"; then
+        echo "could not find $CONFIG file\n"
+        exit 1;
+    fi
+}
+
+start() {
 
     echo -n $"Starting $prog: "
 
-    @bindir@/QueueDaemon.pl --config=@datadir@/sqs/aws-sqs.ini
+    $DAEMON --config=$CONFIG
 
     sleep 1;
 
@@ -70,6 +99,12 @@ graceful() {
 
     echo
 }
+
+find_queue_daemon;
+
+find_config;
+
+pidfile=/var/run/QueueDaemon.pl.pid
 
 case "$1" in 
     start)

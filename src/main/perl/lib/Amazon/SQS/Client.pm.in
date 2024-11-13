@@ -17,7 +17,17 @@ sub new {
 ########################################################################
   my ( $class, @args ) = @_;
 
-  my $client_options = ref $args[2] ? $args[2] : {};
+  my $client_options;
+
+  if ( @args > 2 ) {
+    if ( ref $args[2] ) {
+      $client_options = $args[2];
+    }
+    else {
+      $client_options = $args[3] // {};
+      $client_options->{SecurityToken} = $args[2];
+    }
+  }
 
   return $class->SUPER::new(
     { aws_access_key_id     => $args[0],
@@ -29,12 +39,6 @@ sub new {
 }
 
 ################################################################################
-#  Copyright 2024 Robert C. Lauer
-#
-#  Note: The software contained in this distribution has been modified from the
-#  original. You may freely use and distribute this software under the
-#  terms of the original license.
-#
 #  Copyright 2008 Amazon Technologies, Inc.
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #
@@ -44,6 +48,11 @@ sub new {
 #  CONDITIONS OF ANY KIND, either express or implied. See the License for the
 #  specific language governing permissions and limitations under the License.
 #
+#  Copyright 2024 Robert C. Lauer
+#
+#  Note: The software contained in this distribution has been modified from the
+#  original. You may freely use and distribute this software under the
+#  terms of the original license.
 
 package Amazon::SQS::Client;
 
@@ -97,7 +106,7 @@ sub new {
     $options = $args[0];
   }
   elsif ( $args[0] && $args[1] ) {
-    my $credentials = Amazon::SQS::Credentials->new( $args[0], $args[1] );
+    my $credentials = Amazon::SQS::Credentials->new(@args);
 
     $options = { credentials => $credentials };
 
@@ -470,7 +479,7 @@ sub _invoke {
         else {
           if ( $response->code == $HTTP_INTERNAL_SERVER_ERROR || $response->code == $HTTP_GATEWAY_TIMEOUT ) {
             $shouldRetry = $TRUE;
-            $self->_pauseOnRetry( ++$retries, $response->code );
+            $self->_pauseOnRetry( ++$retries, $response->code, $response->content );
           }
           else {
             my $ex = $self->_reportAnyErrors( $response->content, $response->code );
@@ -517,16 +526,19 @@ sub _invoke {
 ########################################################################
 sub _pauseOnRetry {
 ########################################################################
-  my ( $self, $retries, $status ) = @_;
+  my ( $self, $retries, $status, $error ) = @_;
 
   if ( $retries <= $self->get_MaxErrorRetry ) {
     my $delay = ( 4**$retries ) * 100_000;
     usleep($delay);
   }
   else {
-    Carp::croak Amazon::SQS::Exception->new(
+
+    die Amazon::SQS::Exception->new(
       { Message    => 'Maximum number of retry attempts reached :  ' . ( $retries - 1 ),
         StatusCode => $status,
+        HTTPError  => $error,
+        ErrorCode  => $status,
       }
     );
   }
@@ -1264,17 +1276,14 @@ Amazon::SQS::Client - client interface to Amazon Simple Queue Service
 =head1 SYNOPSIS
 
  # create an HTTP client
- my $aws_client = Amazon::SQS::Client->new( $AWS_ACCESS_KEY_ID, $AWS_SECRET_ACCESS_KEY);
+ my $client = Amazon::SQS::Client->new( $AWS_ACCESS_KEY_ID, $AWS_SECRET_ACCESS_KEY );
 
- # create a request
- my $request = Amazon::SQS::Model::SendMessageRequest->new(
+ # send a message
+ my $response = $client->sendMessage(
    { QueueUrl    => $AWS_QUEUE_URL,
      MessageBody => $message
    }
  );
-
- # submit the request and get a response
- my $response = $aws_client->sendMessage($request);
 
 =head1 DESCRIPTION
 
@@ -1287,7 +1296,9 @@ part of the AWS development stack. Fast forward to 2024 and Perl is no
 longer a supported language in the AWS SDK ecosystem. These modules
 "work" and provide a fairly simple toolset for working with SQS. There
 are more popular and perhaps more supported packages available for
-interacting with SQS. See L</SEE ALSO> for recommended alternatives.>
+interacting with SQS. See L</SEE ALSO> for recommended alternatives.
+You may however find this implementation lighter in weight than other
+implementations.>
 
 =head1 DETAILS
 
@@ -1309,7 +1320,7 @@ with the same technologies, or running at the same time.
 
 =head2 new 
 
- new( aws-access-key-id, aws-secret-access-key, [options] )
+ new( aws-access-key-id, aws-secret-access-key, [token], [options] )
 
 =over 5
 
@@ -1323,15 +1334,24 @@ You can create a new account by visiting L</http://aws.amazon.com/>.
 
 The AWS I<secret access key> you were given when you signed up for AWS services.
 
+=item token
+
+Pass the session token as the third argument on as SecurityToken in
+the options hash described below.
+
 =item options
 
-C<options> is an optional hash reference containing the options listed below.
+C<options> is an optional hash reference containing the options listed
+below.
 
 =over 5
 
 =item * ServiceURL
 
-default: C<https://sqs.amazonaws.com>
+default: C<https://queue.amazonaws.com>
+
+Set the ServiceUrl when you want to use a mocking service like
+L<LocalStack|https://www.localstack.cloud>.
 
 =item * UserAgent
 
@@ -1458,7 +1478,6 @@ See C<Amazon::SQS::Model::AddPermissionRequest for valid> arguments
 
 =back
 
-
 =head2 changeMessageVisibility
 
 changeMessageVisibility( request )
@@ -1484,7 +1503,6 @@ C<Amazon::SQS::Model::ChangeMessageVisibilityRequest> object itself.
 See C<Amazon::SQS::Model::ChangeMessageVisibilityRequest> for valid arguments.
 
 =back
-
 
 =head2 deleteMessage
 
@@ -1513,7 +1531,6 @@ See C<Amazon::SQS::Model::DeleteMessageRequest> for valid arguments
 
 =back
 
-
 =head2 deleteQueue
 
  deleteQueue( request )
@@ -1539,7 +1556,6 @@ C<Amazon::SQS::Model::DeleteQueueRequest> object itself.
 See C<Amazon::SQS::Model::DeleteQueueRequest> for valid arguments.
 
 =back
-
 
 =head2 getQueueAttributes
 

@@ -15,8 +15,7 @@ jobs:
 
       - name: build
         run: |
-          cpanm -n -v Config::IniFiles AWS::Signature4 Proc::Daemon \
-            Proc::PID::File Amazon::Credentials CGI::Simple Module::ScanDeps::Static
+          $(cat cpan/requires | perl -ne 'printf "cpanm -n -v %s~%s\n", grep {defined} split /\s+/, $_," 0";') || true
           ./bootstrap
           ./configure
           make

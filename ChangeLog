@@ -1,3 +1,45 @@
+Wed Nov 13 13:50:42 2024  Rob Lauer  <rlauer6@comcast.net>
+
+	[2.0.6]:
+	* README.md
+	* VERSION: bump
+	* cpan/requires
+	- added Class::Unload, Class::Inspector
+	* src/main/bash/bin/aws-sqsd.in
+	- find artifacts
+	* src/main/perl/bin/QueueDaemon.pl.in
+	- use Class::Inspector, Class::Unload instead of Module::Loaded
+	- add pidfile option
+	- pod updates
+	(main)
+	- don't close Log::Log4perl file handle
+	- eval load_handler to catch errors
+	- use pidfile if provided
+	(init_logger)
+	- don't use easy mode
+	- support stderr, stdout using Screen appender
+	(load_config)
+	- option override config file
+	- make default logfile stderr
+	(load_handler): use Class::Inspector, Class::Unload
+	* src/main/perl/lib/Amazon/SQS/Client.pm.in
+	- pod tweaks
+	(new): allow token as 3rd arg
+	(_invoke): pass content to _pauseOnRetry
+	(_pauseOnRetry)
+	- add content to exception
+	- die don't croak
+	* src/main/perl/lib/Amazon/SQS/Config.pm.in
+	- remove stdout, stderr
+	- pod tweaks
+	- log_file, log_level
+	- add handler_pidfile
+	(create_config_accessors)
+	- don't die on redefine, just don't redefine
+	* src/main/perl/lib/Amazon/SQS/Exception.pm.in
+	(new): add _httpError
+	(getHTTPError): new
+
 Tue Nov 12 07:42:48 2024  Rob Lauer  <rlauer6@comcast.net>
 
 	[2.0.5]:
