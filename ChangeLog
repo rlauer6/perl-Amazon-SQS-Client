@@ -1,3 +1,12 @@
+Wed Nov 27 18:01:26 2024  Rob Lauer  <rlauer6@comcast.net>
+
+	[2.0.7]:
+	* VERSION: bump
+	* cpan/provides: new
+	* cpan/Makefile.am
+	- remove unnecesassary section that was renaming tarball
+	* cpan/resources: pretty
+
 Wed Nov 13 13:50:42 2024  Rob Lauer  <rlauer6@comcast.net>
 
 	[2.0.6]:

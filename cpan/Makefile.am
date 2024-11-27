@@ -1,8 +1,11 @@
 SUBDIRS = .
 
 CPAN_DIST_MAKER=@MAKE_CPAN_DIST@
+
 package_version=@PACKAGE_VERSION@
+
 package=@PACKAGE@
+
 scandeps=@SCANDEPS@
 
 requires:
@@ -17,12 +20,6 @@ requires:
 cpan: buildspec.yml requires
 	PROJECT_ROOT="--project-root $$(readlink -f ..)"; \
 	$(CPAN_DIST_MAKER) $$PROJECT_ROOT -b $<
-	if test -n "$$(echo $(package_version) | grep '\-')"; then \
-	  echo $$package_version; \
-	  package_version=$(package_version); package=$(package); \
-	  tarball=$${package##perl-}-$${package_version%%-*}.tar.gz; \
-	  test -e "$$tarball" && mv $$tarball $${package##perl-}-$$package_version.tar.gz; \
-	fi
 
 .PHONY: cpan
 
@@ -30,4 +27,3 @@ dist_noinst_DATA = buildspec.yml
 
 clean-local:
 	rm -f *.tar.gz
-	rm -f provides
