@@ -93,7 +93,7 @@ __PACKAGE__->mk_accessors(
 
 use parent qw(Class::Accessor::Fast);
 
-our $VERSION = '@PACKAGE_VERSION';
+our $VERSION = '@PACKAGE_VERSION@';
 
 ########################################################################
 sub new {

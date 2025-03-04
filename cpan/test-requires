@@ -1,2 +1,2 @@
-'Test::More' => '1.302190',
-'List::Util'   => '1.63',
+Test::More 1.302190
+List::Util 1.63
